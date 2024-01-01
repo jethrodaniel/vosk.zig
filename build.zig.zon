@@ -1,0 +1,33 @@
+// Copyright 2023-present, Mark Delk
+// SPDX-License-Identifier: Apache-2.0
+
+.{
+    .name = "vosk",
+    .version = "0.0.0",
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+    },
+    .dependencies = .{
+        .vosk_src = .{
+            .url = "git+https://github.com/alphacep/vosk-api#v0.3.45",
+            .hash = "1220bfb3e187fa21a987ca256fe55ed378f0a2a017d711352b932f320f456de1b362",
+        },
+        // fork of alphacep/openfst#master with NDEBUG fixes
+        .openfst = .{
+            .url = "git+https://github.com/jethrodaniel/openfst#fork",
+            .hash = "122074ff3bd9f9932a1043b0e6d9ed0ff5fa6644eeba999af6a28bf27a6e04354f6d",
+        },
+        // fork of alphacep/kaldi#vosk with NDEBUG fixes
+        .kaldi = .{
+            .url = "git+https://github.com/jethrodaniel/kaldi#fork",
+            .hash = "12208056d84b2140f3ace6f937f3e0c6761125e4a92f9248c234524c6ecc0aee80ac",
+        },
+        .vosk_model_small_en_us_0_15 = .{
+            // TODO: fetch from https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip
+            //  once https://github.com/ziglang/zig/issues/17408 is resolved.
+            .url = "https://github.com/jethrodaniel/vosk-models/releases/download/vosk-model-small-en-us-0.15/vosk-model-small-en-us-0.15.tar.gz",
+            .hash = "1220e90dfb99e498e47515674d2934fcb6ce982598e0a76937573e69f2c009890342",
+        },
+    },
+}
