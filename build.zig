@@ -396,12 +396,12 @@ pub fn build(b: *std.Build) void {
     //----
 
     const static_lib = b.addStaticLibrary(.{
-        .name = "vosk",
+        .name = "vosk-static",
         .target = target,
         .optimize = optimize,
     });
     const shared_lib = b.addSharedLibrary(.{
-        .name = "vosk",
+        .name = "vosk-shared",
         .target = target,
         .optimize = optimize,
     });
@@ -452,6 +452,8 @@ pub fn build(b: *std.Build) void {
             if (lib.linkage == .static) {
                 lib.pie = true;
             }
+
+            b.installArtifact(lib);
         }
     }
 
@@ -506,12 +508,20 @@ pub fn build(b: *std.Build) void {
         .input = final_static_lib.output,
         .additional_args = additional_args.items,
     });
+    const build_final_shared_lib_step = b.step("shared", "Build shared lib");
     {
-        const installFinalStep = b.addInstallLibFile(
+        const installLib = b.addInstallLibFile(
             final_shared_lib.output,
             final_shared_lib.opts.out_name,
         );
-        b.getInstallStep().dependOn(&installFinalStep.step);
+        const installHeader = b.addInstallHeaderFile(
+            vosk_dep.path("src/vosk_api.h").getPath(b),
+            "vosk_api.h",
+        );
+
+        const step = build_final_shared_lib_step;
+        step.dependOn(&installLib.step);
+        step.dependOn(&installHeader.step);
     }
 
     //--------------------------------
@@ -598,8 +608,7 @@ pub fn build(b: *std.Build) void {
         // exe.linkLibrary(shared_lib);
 
         exe.linkSystemLibrary("vosk");
-        // TODO: don't require install, get final_static_lib's directory
-        exe.step.dependOn(b.getInstallStep());
+        exe.step.dependOn(build_final_shared_lib_step);
         exe.addLibraryPath(.{ .path = b.getInstallPath(.lib, "") });
         exe.addRPath(.{ .path = b.getInstallPath(.lib, "") });
 

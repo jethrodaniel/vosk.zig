@@ -30,8 +30,8 @@ cd vosk.zig
 To build dynamic libraries for x86/arm64:
 
 ```sh
-zig build -Doptimize=ReleaseFast -Dtarget=x86_64-macos.13.0...13.0-none -p vosk/x86_64-macos
-zig build -Doptimize=ReleaseFast -Dtarget=aarch64-macos.13.0...13.0-none -p vosk/aarch64-macos
+zig build -Doptimize=ReleaseFast -Dtarget=x86_64-macos.13.0...13.0-none -p vosk/x86_64-macos shared
+zig build -Doptimize=ReleaseFast -Dtarget=aarch64-macos.13.0...13.0-none -p vosk/aarch64-macos shared
 ```
 
 Result:
@@ -50,11 +50,11 @@ vosk
         └── libvosk.dylib
 ```
 
-To build dynamic and static libraries for x86/arm64:
+To build static libraries for x86/arm64:
 
 ```sh
-zig build -Doptimize=ReleaseFast -Dtarget=x86_64-macos.13.0...13.0-none -p vosk/x86_64-macos install static
-zig build -Doptimize=ReleaseFast -Dtarget=aarch64-macos.13.0...13.0-none -p vosk/aarch64-macos install static
+zig build -Doptimize=ReleaseFast -Dtarget=x86_64-macos.13.0...13.0-none -p vosk/x86_64-macos static
+zig build -Doptimize=ReleaseFast -Dtarget=aarch64-macos.13.0...13.0-none -p vosk/aarch64-macos static
 ```
 
 Result:
@@ -65,14 +65,12 @@ vosk
 │   ├── include
 │   │   └── vosk_api.h
 │   └── lib
-│       ├── libvosk.a
-│       └── libvosk.dylib
+│       └── libvosk.a
 └── x86_64-macos
     ├── include
     │   └── vosk_api.h
     └── lib
-        ├── libvosk.a
-        └── libvosk.dylib
+│       └── libvosk.a
 ```
 
 ## Examples
