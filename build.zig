@@ -474,9 +474,6 @@ pub fn build(b: *std.Build) void {
             final_static_lib.opts.out_name,
         );
 
-        // Install explicitly, not by default
-        // b.getInstallStep().dependOn(&installFinalStep.step);
-
         const step = b.step("static", "Build static lib");
         step.dependOn(&installFinalStep.step);
     }

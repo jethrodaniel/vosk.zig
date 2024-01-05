@@ -41,11 +41,14 @@ jobs:
         run: |
           echo ${PWD}/${ZIG} >> $GITHUB_PATH
 
-      - name: build
+      - name: zig version
         run: |
           zig version
-          zig build --summary all --verbose -Doptimize=ReleaseFast -Dtarget=x86_64-macos.13.0...13.0-none -p vosk/x86_64-macos shared
-          zig build --summary all --verbose -Doptimize=ReleaseFast -Dtarget=aarch64-macos.13.0...13.0-none -p vosk/aarch64-macos shared
+
+      - name: build
+        run: |
+          zig build --summary all --verbose -Doptimize=ReleaseFast -Dtarget=x86_64-macos.10.13...13.6.3-none -p vosk/x86_64-macos shared
+          zig build --summary all --verbose -Doptimize=ReleaseFast -Dtarget=aarch64-macos.11.0...13.6.3-none -p vosk/aarch64-macos shared
 
       - uses: actions/upload-artifact@v3
         with:
