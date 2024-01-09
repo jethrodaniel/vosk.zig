@@ -118,7 +118,7 @@ bundle exec ruby examples/transcribe.rb
 ### Zig
 
 Add to your `build.zig.zon`:
-```sh
+```zig
 .{
     .name = "example",
     .version = "0.0.0",
@@ -151,7 +151,7 @@ Add to your `build.zig.zon`:
 ```
 
 Update your `build.zig`:
-```sh
+```zig
    // 1. use vosk.zig
 
     const use_precompiled_vosk = b.option(bool, "use_precompiled_vosk",
