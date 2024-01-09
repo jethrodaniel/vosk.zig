@@ -117,38 +117,88 @@ bundle exec ruby examples/transcribe.rb
 
 ### Zig
 
-#### Compiling from source
-
 Add to your `build.zig.zon`:
 ```sh
-TODO
+.{
+    .name = "example",
+    .version = "0.0.0",
+    .dependencies = .{
+        .vosk_zig = .{
+            .url = "git+https://github.com/jethrodaniel/vosk.zig#v0.1.0",
+            .hash = "12208dd0f3811388fc7d347bbe9d9492ce6ecf8427d5a84e67d5b987851cec847406",
+        },
+        .vosk_x86_64_macos = .{
+            .url = "https://github.com/jethrodaniel/vosk.zig/releases/download/v0.1.0/vosk-0.3.45-x86_64-macos.tar.gz",
+            .hash = "1220d9484589f6201795ec1e08c877068254753527245e57d888ce339caa6a01a38a",
+        },
+        .vosk_aarch64_macos = .{
+            .url = "https://github.com/jethrodaniel/vosk.zig/releases/download/v0.1.0/vosk-0.3.45-aarch64-macos.tar.gz",
+            .hash = "1220f91ec8be66fbe01d0773db8c309c62ec160db94ff0f77325e8dd710e276b8b40",
+        },
+        .vosk_model_small_en_us_0_15 = .{
+            // TODO: fetch from https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip
+            //  once https://github.com/ziglang/zig/issues/17408 is resolved.
+            .url = "https://github.com/jethrodaniel/vosk-models/releases/download/vosk-model-small-en-us-0.15/vosk-model-small-en-us-0.15.tar.gz",
+            .hash = "1220e90dfb99e498e47515674d2934fcb6ce982598e0a76937573e69f2c009890342",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
 ```
 
 Update your `build.zig`:
 ```sh
-TODO
-```
+   // 1. use vosk.zig
 
-Use in your code like so:
-```sh
-TODO
-```
+    const use_precompiled_vosk = b.option(bool, "use_precompiled_vosk",
+        \\Use precompiled Vosk (default: true)
+    ) orelse true;
 
-#### Using the pre-compiled binaries
+    if (use_precompiled_vosk and
+        target.getOsTag() != .macos and
+        !(target.getCpuArch() == .aarch64 or target.getCpuArch() == .x86_64))
+    {
+        const triple = target.zigTriple(b.allocator) catch @panic("OOM, zigTriple");
+        @panic(b.fmt("arch {s} is invalid for vosk", .{triple}));
+    }
+    const vosk_dep_name = if (use_precompiled_vosk and target.getCpuArch() == .aarch64)
+        "vosk_aarch64_macos"
+    else if (use_precompiled_vosk and target.getCpuArch() == .x86_64)
+        "vosk_x86_64_macos"
+    else
+        "vosk_zig";
 
-Add to your `build.zig.zon`:
-```sh
-TODO
-```
+    const vosk_dep = b.dependency(vosk_dep_name, .{
+        .target = target,
+        .optimize = .ReleaseFast,
+    });
+    {
+        if (use_precompiled_vosk) {
+            exe.linkSystemLibrary("vosk");
+            exe.addLibraryPath(vosk_dep.path("lib"));
+            exe.addRPath(vosk_dep.path("lib"));
+            exe.addIncludePath(vosk_dep.path("include"));
+        } else {
+            exe.linkLibrary(vosk_dep.artifact("vosk-static"));
+        }
+    }
 
-Update your `build.zig`:
-```sh
-TODO
-```
+    // 2. use a vosk model
 
-Use in your code like so:
-```sh
-TODO
+    const model_dep = b.dependency("vosk_model_small_en_us_0_15", .{});
+
+    const install_model = b.addInstallDirectory(.{
+        .source_dir = model_dep.path(""),
+        .install_dir = .bin,
+        .install_subdir = "model",
+    });
+    exe.step.dependOn(&install_model.step);
+
+    // For more details, see src/example.zig and `zig build zig-example`.
 ```
 
 ## License
