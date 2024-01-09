@@ -5,7 +5,10 @@
 
 Building [vosk-api](https://github.com/alphacep/vosk-api) using [zig](https://ziglang.org).
 
-**NOTE**: currently only supports MacOS (x86/arm64)
+## Status
+
+- currently only supports MacOS (x86/arm64)
+  - NOTE: requires `-framework Accelerate`
 
 ## Setup
 
