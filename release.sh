@@ -17,13 +17,13 @@ tar czvf vosk-0.3.45-aarch64-macos.tar.gz --uid=0 --gid=0 aarch64-macos
 
 TAG='v0.1.0'
 
-gh release create "$TAG" -n <<'MSG'
+gh release create "$TAG" -n '
 Builds of https://github.com/alphacep/vosk-api.
 
 ### NOTE
 
 This initial release is only for MacOS, and uses `-framework Accelerate`.
-MSG
+'
 
 gh release upload --clobber "$TAG" vosk-0.3.45-x86_64-macos.tar.gz
 gh release upload --clobber "$TAG" vosk-0.3.45-aarch64-macos.tar.gz
