@@ -17,27 +17,26 @@ pub fn build(b: *std.Build) void {
     const fst = b.addStaticLibrary(.{
         .name = "fst",
         .target = target,
-        .optimize = optimize,
+        .optimize = .ReleaseFast,
     });
     {
         const lib = fst;
-
-        const srcs: []const []const u8 = &.{
-            "src/lib/compat.cc",
-            "src/lib/encode.cc",
-            "src/lib/flags.cc",
-            "src/lib/fst-types.cc",
-            "src/lib/fst.cc",
-            "src/lib/mapped-file.cc",
-            "src/lib/properties.cc",
-            "src/lib/symbol-table-ops.cc",
-            "src/lib/symbol-table.cc",
-            "src/lib/util.cc",
-            "src/lib/weight.cc",
-        };
-        for (srcs) |src| {
-            lib.addCSourceFile(.{ .file = fst_dep.path(src), .flags = &.{} });
-        }
+        lib.addCSourceFiles(.{
+            .dependency = fst_dep,
+            .files = &.{
+                "src/lib/compat.cc",
+                "src/lib/encode.cc",
+                "src/lib/flags.cc",
+                "src/lib/fst-types.cc",
+                "src/lib/fst.cc",
+                "src/lib/mapped-file.cc",
+                "src/lib/properties.cc",
+                "src/lib/symbol-table-ops.cc",
+                "src/lib/symbol-table.cc",
+                "src/lib/util.cc",
+                "src/lib/weight.cc",
+            },
+        });
 
         lib.defineCMacro("NDEBUG", "1");
         lib.defineCMacro("FST_NO_DYNAMIC_LINKING", "1");
@@ -53,19 +52,18 @@ pub fn build(b: *std.Build) void {
     const fstngram = b.addStaticLibrary(.{
         .name = "fstngram",
         .target = target,
-        .optimize = optimize,
+        .optimize = .ReleaseFast,
     });
     {
         const lib = fstngram;
-
-        const srcs: []const []const u8 = &.{
-            "src/extensions/ngram/bitmap-index.cc",
-            "src/extensions/ngram/ngram-fst.cc",
-            "src/extensions/ngram/nthbit.cc",
-        };
-        for (srcs) |src| {
-            lib.addCSourceFile(.{ .file = fst_dep.path(src), .flags = &.{} });
-        }
+        lib.addCSourceFiles(.{
+            .dependency = fst_dep,
+            .files = &.{
+                "src/extensions/ngram/bitmap-index.cc",
+                "src/extensions/ngram/ngram-fst.cc",
+                "src/extensions/ngram/nthbit.cc",
+            },
+        });
 
         lib.addIncludePath(fst_dep.path("src/include"));
         lib.linkLibCpp();
@@ -77,45 +75,40 @@ pub fn build(b: *std.Build) void {
 
     //--
 
-    // NOTE: vosk only needs the following Kaldi libraries: kaldi-base kaldi-online2 kaldi-rnnlm
-    const kaldi = b.addStaticLibrary(.{
-        .name = "kaldi",
+    const kaldi_optimize = .ReleaseFast;
+
+    //
+
+    const kaldi_base = b.addStaticLibrary(.{
+        .name = "kaldi-base",
         .target = target,
-        // NOTE: Needed with zig's `-Doptimize=Debug`, since UBSan throws
-        // an EXC_BAD_INSTRUCTION error at `nnet-common.cc:371:13`.
-        //
-        // See https://devlog.hexops.com/2022/debugging-undefined-behavior/
-        //
-        // TODO: set a compiler flag to avoid having to use `ReleaseFast` for
-        // the entire library, OR compile nnet3 separately.
-        .optimize = .ReleaseFast,
+        .optimize = kaldi_optimize,
     });
     {
-        const lib = kaldi;
-
-        lib.defineCMacro("NDEBUG", "1");
-        // kaldi-matrix
-        lib.defineCMacro("HAVE_CLAPACK", "1");
-        // kaldi-cudamatrix
-        lib.defineCMacro("HAVE_CUDA", "0");
-        // kaldi-online
-        lib.defineCMacro("KALDI_NO_PORTAUDIO", "1");
-        // kaldi/src/.version
-        lib.defineCMacro("KALDI_VERSION", "\"5.5\"");
-
-        lib.addIncludePath(kaldi_dep.path("src"));
-        lib.addIncludePath(kaldi_dep.path("src/base"));
-        lib.addIncludePath(fst_dep.path("src/include"));
-
-        // NOTE: we could build each library separately if we want, but this
-        // seems simpler.
+        const lib = kaldi_base;
         const srcs: []const []const u8 = &.{
             "src/base/io-funcs.cc",
             "src/base/kaldi-error.cc",
             "src/base/kaldi-math.cc",
             "src/base/kaldi-utils.cc",
             "src/base/timer.cc",
+        };
+        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
 
+        lib.defineCMacro("KALDI_VERSION", "\"5.5\""); // kaldi/src/.version
+        lib.defineCMacro("NDEBUG", "1");
+    }
+
+    //
+
+    const kaldi_matrix = b.addStaticLibrary(.{
+        .name = "kaldi-matrix",
+        .target = target,
+        .optimize = kaldi_optimize,
+    });
+    {
+        const lib = kaldi_matrix;
+        const srcs: []const []const u8 = &.{
             "src/matrix/compressed-matrix.cc",
             "src/matrix/kaldi-matrix.cc",
             "src/matrix/kaldi-vector.cc",
@@ -127,7 +120,50 @@ pub fn build(b: *std.Build) void {
             "src/matrix/sparse-matrix.cc",
             "src/matrix/srfft.cc",
             "src/matrix/tp-matrix.cc",
+        };
+        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        // lib.linkLibrary(kaldi_base);
 
+        lib.defineCMacro("HAVE_CLAPACK", "1");
+        // lib.defineCMacro("HAVE_OPENBLAS", "1");
+
+        // NOTE: needed for `kaldi-matrix`
+        if (target.isDarwin()) {
+            const target_info = std.zig.system.NativeTargetInfo.detect(target) catch unreachable;
+            const sdk = std.zig.system.darwin.getSdk(b.allocator, target_info.target) orelse
+                @panic("macOS SDK is missing");
+            lib.addSystemIncludePath(.{ .path = b.pathJoin(&.{ sdk, "/usr/include" }) });
+            lib.addSystemFrameworkPath(.{ .path = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
+            lib.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
+
+            // NOTE: Using Xcode's `Accelerate` framework means that we have to
+            //   comply with Apple's Xcode license:
+            //
+            //   https://www.apple.com/legal/sla/docs/xcode.pdf
+            //
+            // See https://github.com/hexops/xcode-frameworks/blob/main/LICENSE
+            //
+            // TODO: use OpenBLAS instead to avoid this (requires Kaldi changes).
+            lib.linkFramework("Accelerate");
+        } else if (target.isLinux()) {
+            lib.addIncludePath(kaldi_dep.path("tools/CLAPACK"));
+
+            // sudo apt-get install -y libopenblas-dev
+            lib.linkSystemLibrary("openblas");
+            lib.addLibraryPath(.{ .path = "/usr/lib/x86_64-linux-gnu" });
+        }
+    }
+
+    //
+
+    const kaldi_util = b.addStaticLibrary(.{
+        .name = "kaldi-util",
+        .target = target,
+        .optimize = kaldi_optimize,
+    });
+    {
+        const lib = kaldi_util;
+        const srcs: []const []const u8 = &.{
             "src/util/kaldi-holder.cc",
             "src/util/kaldi-io.cc",
             "src/util/kaldi-semaphore.cc",
@@ -137,7 +173,23 @@ pub fn build(b: *std.Build) void {
             "src/util/simple-io-funcs.cc",
             "src/util/simple-options.cc",
             "src/util/text-utils.cc",
+        };
+        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        // kaldi_util.linkLibrary(kaldi_matrix);
+        // kaldi_util.linkLibrary(kaldi_base);
+    }
 
+    //
+
+    const kaldi_tree = b.addStaticLibrary(.{
+        .name = "kaldi-tree",
+        .target = target,
+        .optimize = kaldi_optimize,
+    });
+    {
+        const lib = kaldi_tree;
+
+        const srcs: []const []const u8 = &.{
             "src/tree/build-tree-questions.cc",
             "src/tree/build-tree-utils.cc",
             "src/tree/build-tree.cc",
@@ -146,7 +198,23 @@ pub fn build(b: *std.Build) void {
             "src/tree/context-dep.cc",
             "src/tree/event-map.cc",
             "src/tree/tree-renderer.cc",
+        };
+        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        // lib.linkLibrary(kaldi_util);
+        // lib.linkLibrary(kaldi_matrix);
+        // lib.linkLibrary(kaldi_base);
+    }
 
+    //
+
+    const kaldi_gmm = b.addStaticLibrary(.{
+        .name = "kaldi-gmm",
+        .target = target,
+        .optimize = kaldi_optimize,
+    });
+    {
+        const lib = kaldi_gmm;
+        const srcs: []const []const u8 = &.{
             "src/gmm/am-diag-gmm.cc",
             "src/gmm/decodable-am-diag-gmm.cc",
             "src/gmm/diag-gmm-normal.cc",
@@ -159,7 +227,26 @@ pub fn build(b: *std.Build) void {
             "src/gmm/mle-diag-gmm.cc",
             "src/gmm/mle-full-gmm.cc",
             "src/gmm/model-common.cc",
+        };
+        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        // lib.linkLibrary(kaldi_tree);
+        // lib.linkLibrary(kaldi_util);
+        // lib.linkLibrary(kaldi_matrix);
+        // lib.linkLibrary(kaldi_base);
+    }
 
+    //
+
+    const kaldi_transform = b.addStaticLibrary(.{
+        .name = "kaldi-transform",
+        .target = target,
+        .optimize = kaldi_optimize,
+    });
+
+    {
+        const lib = kaldi_transform;
+
+        const srcs: []const []const u8 = &.{
             "src/transform/basis-fmllr-diag-gmm.cc",
             "src/transform/cmvn.cc",
             "src/transform/compressed-transform-stats.cc",
@@ -174,13 +261,51 @@ pub fn build(b: *std.Build) void {
             "src/transform/regtree-fmllr-diag-gmm.cc",
             "src/transform/regtree-mllr-diag-gmm.cc",
             "src/transform/transform-common.cc",
+        };
+        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        // lib.linkLibrary(kaldi_gmm);
+        // lib.linkLibrary(kaldi_tree);
+        // lib.linkLibrary(kaldi_util);
+        // lib.linkLibrary(kaldi_matrix);
+        // lib.linkLibrary(kaldi_base);
+    }
 
+    //
+
+    const kaldi_ivector = b.addStaticLibrary(.{
+        .name = "kaldi-ivector",
+        .target = target,
+        .optimize = kaldi_optimize,
+    });
+    {
+        const lib = kaldi_ivector;
+
+        const srcs: []const []const u8 = &.{
             "src/ivector/agglomerative-clustering.cc",
             "src/ivector/ivector-extractor.cc",
             "src/ivector/logistic-regression.cc",
             "src/ivector/plda.cc",
             "src/ivector/voice-activity-detection.cc",
+        };
+        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        // lib.linkLibrary(kaldi_transform);
+        // lib.linkLibrary(kaldi_gmm);
+        // lib.linkLibrary(kaldi_tree);
+        // lib.linkLibrary(kaldi_util);
+        // lib.linkLibrary(kaldi_matrix);
+        // lib.linkLibrary(kaldi_base);
+    }
 
+    //
+
+    const kaldi_cudamatrix = b.addStaticLibrary(.{
+        .name = "kaldi-cudamatrix",
+        .target = target,
+        .optimize = kaldi_optimize,
+    });
+    {
+        const lib = kaldi_cudamatrix;
+        const srcs: []const []const u8 = &.{
             "src/cudamatrix/cu-allocator.cc",
             "src/cudamatrix/cu-array.cc",
             "src/cudamatrix/cu-block-matrix.cc",
@@ -195,13 +320,49 @@ pub fn build(b: *std.Build) void {
             "src/cudamatrix/cu-sparse-matrix.cc",
             "src/cudamatrix/cu-tp-matrix.cc",
             "src/cudamatrix/cu-vector.cc",
+        };
+        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        // lib.linkLibrary(kaldi_util);
+        // lib.linkLibrary(kaldi_matrix);
+        // lib.linkLibrary(kaldi_base);
 
+        lib.defineCMacro("HAVE_CUDA", "0");
+        lib.defineCMacro("NDEBUG", "1");
+    }
+
+    //
+
+    const kaldi_hmm = b.addStaticLibrary(.{
+        .name = "kaldi-hmm",
+        .target = target,
+        .optimize = kaldi_optimize,
+    });
+    {
+        const lib = kaldi_hmm;
+        const srcs: []const []const u8 = &.{
             "src/hmm/hmm-topology.cc",
             "src/hmm/hmm-utils.cc",
             "src/hmm/posterior.cc",
             "src/hmm/transition-model.cc",
             "src/hmm/tree-accu.cc",
+        };
+        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        // lib.linkLibrary(kaldi_tree);
+        // lib.linkLibrary(kaldi_util);
+        // lib.linkLibrary(kaldi_matrix);
+        // lib.linkLibrary(kaldi_base);
+    }
 
+    //
+
+    const kaldi_lat = b.addStaticLibrary(.{
+        .name = "kaldi-lat",
+        .target = target,
+        .optimize = kaldi_optimize,
+    });
+    {
+        const lib = kaldi_lat;
+        const srcs: []const []const u8 = &.{
             "src/lat/compose-lattice-pruned.cc",
             "src/lat/confidence.cc",
             "src/lat/determinize-lattice-pruned.cc",
@@ -214,12 +375,43 @@ pub fn build(b: *std.Build) void {
             "src/lat/sausages.cc",
             "src/lat/word-align-lattice-lexicon.cc",
             "src/lat/word-align-lattice.cc",
+        };
+        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        // lib.linkLibrary(kaldi_hmm);
+        // lib.linkLibrary(kaldi_tree);
+        // lib.linkLibrary(kaldi_util);
+        // lib.linkLibrary(kaldi_matrix);
+        // lib.linkLibrary(kaldi_base);
+    }
 
+    //
+
+    const kaldi_fstext = b.addStaticLibrary(.{
+        .name = "kaldi-fstext",
+        .target = target,
+        .optimize = kaldi_optimize,
+    });
+    {
+        const lib = kaldi_fstext;
+        const srcs: []const []const u8 = &.{
             "src/fstext/context-fst.cc",
             "src/fstext/grammar-context-fst.cc",
             "src/fstext/kaldi-fst-io.cc",
             "src/fstext/push-special.cc",
+        };
+        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+    }
 
+    //
+
+    const kaldi_chain = b.addStaticLibrary(.{
+        .name = "kaldi-chain",
+        .target = target,
+        .optimize = kaldi_optimize,
+    });
+    {
+        const lib = kaldi_chain;
+        const srcs: []const []const u8 = &.{
             "src/chain/chain-supervision.cc",
             "src/chain/chain-numerator.cc",
             "src/chain/chain-den-graph.cc",
@@ -227,7 +419,29 @@ pub fn build(b: *std.Build) void {
             "src/chain/chain-denominator.cc",
             "src/chain/chain-training.cc",
             "src/chain/chain-generic-numerator.cc",
+        };
+        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        lib.defineCMacro("HAVE_CUDA", "0");
+        // lib.linkLibrary(kaldi_cudamatrix);
+        // lib.linkLibrary(kaldi_lat);
+        // lib.linkLibrary(kaldi_fstext);
+        // lib.linkLibrary(kaldi_hmm);
+        // lib.linkLibrary(kaldi_tree);
+        // lib.linkLibrary(kaldi_util);
+        // lib.linkLibrary(kaldi_matrix);
+        // lib.linkLibrary(kaldi_base);
+    }
 
+    //
+
+    const kaldi_decoder = b.addStaticLibrary(.{
+        .name = "kaldi-decoder",
+        .target = target,
+        .optimize = kaldi_optimize,
+    });
+    {
+        const lib = kaldi_decoder;
+        const srcs: []const []const u8 = &.{
             "src/decoder/decodable-matrix.cc",
             "src/decoder/decoder-wrappers.cc",
             "src/decoder/faster-decoder.cc",
@@ -239,7 +453,29 @@ pub fn build(b: *std.Build) void {
             "src/decoder/lattice-simple-decoder.cc",
             "src/decoder/simple-decoder.cc",
             "src/decoder/training-graph-compiler.cc",
+        };
+        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        // lib.linkLibrary(kaldi_lat);
+        // lib.linkLibrary(kaldi_fstext);
+        // lib.linkLibrary(kaldi_hmm);
+        // lib.linkLibrary(kaldi_transform);
+        // lib.linkLibrary(kaldi_gmm);
+        // lib.linkLibrary(kaldi_tree);
+        // lib.linkLibrary(kaldi_util);
+        // lib.linkLibrary(kaldi_matrix);
+        // lib.linkLibrary(kaldi_base);
+    }
 
+    //
+
+    const kaldi_nnet3 = b.addStaticLibrary(.{
+        .name = "kaldi-nnet3",
+        .target = target,
+        .optimize = kaldi_optimize,
+    });
+    {
+        const lib = kaldi_nnet3;
+        const srcs: []const []const u8 = &.{
             "src/nnet3/am-nnet-simple.cc",
             "src/nnet3/attention.cc",
             "src/nnet3/convolution.cc",
@@ -286,7 +522,33 @@ pub fn build(b: *std.Build) void {
             "src/nnet3/nnet-tdnn-component.cc",
             "src/nnet3/nnet-training.cc",
             "src/nnet3/nnet-utils.cc",
+        };
+        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        lib.defineCMacro("HAVE_CUDA", "0");
+        // lib.linkLibrary(kaldi_chain);
+        // lib.linkLibrary(kaldi_cudamatrix);
+        // lib.linkLibrary(kaldi_decoder);
+        // lib.linkLibrary(kaldi_lat);
+        // lib.linkLibrary(kaldi_fstext);
+        // lib.linkLibrary(kaldi_hmm);
+        // lib.linkLibrary(kaldi_transform);
+        // lib.linkLibrary(kaldi_gmm);
+        // lib.linkLibrary(kaldi_tree);
+        // lib.linkLibrary(kaldi_util);
+        // lib.linkLibrary(kaldi_matrix);
+        // lib.linkLibrary(kaldi_base);
+    }
 
+    //
+
+    const kaldi_feat = b.addStaticLibrary(.{
+        .name = "kaldi-feat",
+        .target = target,
+        .optimize = kaldi_optimize,
+    });
+    {
+        const lib = kaldi_feat;
+        const srcs: []const []const u8 = &.{
             "src/feat/feature-fbank.cc",
             "src/feat/feature-functions.cc",
             "src/feat/feature-mfcc.cc",
@@ -299,14 +561,50 @@ pub fn build(b: *std.Build) void {
             "src/feat/resample.cc",
             "src/feat/signal.cc",
             "src/feat/wave-reader.cc",
+        };
+        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        // lib.linkLibrary(kaldi_transform);
+        // lib.linkLibrary(kaldi_gmm);
+        // lib.linkLibrary(kaldi_tree);
+        // lib.linkLibrary(kaldi_util);
+        // lib.linkLibrary(kaldi_matrix);
+        // lib.linkLibrary(kaldi_base);
+    }
 
+    //
+
+    const kaldi_lm = b.addStaticLibrary(.{
+        .name = "kaldi-lm",
+        .target = target,
+        .optimize = kaldi_optimize,
+    });
+    {
+        const lib = kaldi_lm;
+        const srcs: []const []const u8 = &.{
             "src/lm/arpa-file-parser.cc",
             "src/lm/arpa-lm-compiler.cc",
             "src/lm/const-arpa-lm.cc",
             "src/lm/kaldi-rnnlm.cc",
             "src/lm/kenlm.cc",
             "src/lm/mikolov-rnnlm-lib.cc",
+        };
+        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        // lib.linkLibrary(kaldi_fstext);
+        // lib.linkLibrary(kaldi_util);
+        // lib.linkLibrary(kaldi_matrix);
+        // lib.linkLibrary(kaldi_base);
+    }
 
+    //
+
+    const kaldi_rnnlm = b.addStaticLibrary(.{
+        .name = "kaldi-rnnlm",
+        .target = target,
+        .optimize = kaldi_optimize,
+    });
+    {
+        const lib = kaldi_rnnlm;
+        const srcs: []const []const u8 = &.{
             "src/rnnlm/rnnlm-compute-state.cc",
             "src/rnnlm/rnnlm-core-compute.cc",
             "src/rnnlm/rnnlm-core-training.cc",
@@ -319,7 +617,28 @@ pub fn build(b: *std.Build) void {
             "src/rnnlm/sampler.cc",
             "src/rnnlm/sampling-lm-estimate.cc",
             "src/rnnlm/sampling-lm.cc",
+        };
+        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        lib.linkLibCpp();
+        // lib.linkLibrary(kaldi_nnet3);
+        // lib.linkLibrary(kaldi_cudamatrix);
+        // lib.linkLibrary(kaldi_lm);
+        // lib.linkLibrary(kaldi_hmm);
+        // lib.linkLibrary(kaldi_util);
+        // lib.linkLibrary(kaldi_matrix);
+        // lib.linkLibrary(kaldi_base);
+    }
 
+    //
+
+    const kaldi_nnet2 = b.addStaticLibrary(.{
+        .name = "kaldi-nnet2",
+        .target = target,
+        .optimize = kaldi_optimize,
+    });
+    {
+        const lib = kaldi_nnet2;
+        const srcs: []const []const u8 = &.{
             "src/nnet2/am-nnet.cc",
             "src/nnet2/combine-nnet-fast.cc",
             "src/nnet2/combine-nnet.cc",
@@ -346,7 +665,30 @@ pub fn build(b: *std.Build) void {
             "src/nnet2/train-nnet-ensemble.cc",
             "src/nnet2/train-nnet.cc",
             "src/nnet2/widen-nnet.cc",
+        };
+        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        lib.defineCMacro("HAVE_CUDA", "0");
+        // lib.linkLibrary(kaldi_cudamatrix);
+        // lib.linkLibrary(kaldi_lat);
+        // lib.linkLibrary(kaldi_hmm);
+        // lib.linkLibrary(kaldi_transform);
+        // lib.linkLibrary(kaldi_gmm);
+        // lib.linkLibrary(kaldi_tree);
+        // lib.linkLibrary(kaldi_util);
+        // lib.linkLibrary(kaldi_matrix);
+        // lib.linkLibrary(kaldi_base);
+    }
 
+    //
+
+    const kaldi_online2 = b.addStaticLibrary(.{
+        .name = "kaldi-online2",
+        .target = target,
+        .optimize = kaldi_optimize,
+    });
+    {
+        const lib = kaldi_online2;
+        const srcs: []const []const u8 = &.{
             "src/online2/online-endpoint.cc",
             "src/online2/online-feature-pipeline.cc",
             "src/online2/online-gmm-decodable.cc",
@@ -362,12 +704,63 @@ pub fn build(b: *std.Build) void {
             "src/online2/online-timing.cc",
             "src/online2/onlinebin-util.cc",
         };
-        for (srcs) |src| {
-            // https://github.com/alphacep/kaldi/pull/3#issuecomment-1147084916
-            lib.addCSourceFile(.{ .file = kaldi_dep.path(src), .flags = &.{"-std=c++17"} });
-        }
+        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        // lib.linkLibrary(kaldi_ivector);
+        // lib.linkLibrary(kaldi_nnet3);
+        // lib.linkLibrary(kaldi_chain);
+        // lib.linkLibrary(kaldi_nnet2);
+        // lib.linkLibrary(kaldi_cudamatrix);
+        // lib.linkLibrary(kaldi_decoder);
+        // lib.linkLibrary(kaldi_lat);
+        // lib.linkLibrary(kaldi_hmm);
+        // lib.linkLibrary(kaldi_feat);
+        // lib.linkLibrary(kaldi_transform);
+        // lib.linkLibrary(kaldi_gmm);
+        // lib.linkLibrary(kaldi_tree);
+        // lib.linkLibrary(kaldi_util);
+        // lib.linkLibrary(kaldi_matrix);
+        // lib.linkLibrary(kaldi_base);
+    }
+
+    //
+
+    const kaldi = b.addStaticLibrary(.{
+        .name = "kaldi",
+        .target = target,
+        .optimize = kaldi_optimize,
+    });
+    {
+        const lib = kaldi;
 
         lib.linkLibCpp();
+
+        // TODO: only ones we need..
+        // lib.linkLibrary(kaldi_online2);
+        // lib.linkLibrary(kaldi_lm);
+        // lib.linkLibrary(kaldi_rnnlm);
+
+        lib.linkLibrary(fst);
+        lib.linkLibrary(fstngram);
+
+        lib.linkLibrary(kaldi_base);
+        lib.linkLibrary(kaldi_matrix);
+        lib.linkLibrary(kaldi_util);
+        lib.linkLibrary(kaldi_tree);
+        lib.linkLibrary(kaldi_gmm);
+        lib.linkLibrary(kaldi_transform);
+        lib.linkLibrary(kaldi_ivector);
+        lib.linkLibrary(kaldi_cudamatrix);
+        lib.linkLibrary(kaldi_hmm);
+        lib.linkLibrary(kaldi_lat);
+        lib.linkLibrary(kaldi_fstext);
+        lib.linkLibrary(kaldi_chain);
+        lib.linkLibrary(kaldi_decoder);
+        lib.linkLibrary(kaldi_nnet3);
+        lib.linkLibrary(kaldi_feat);
+        lib.linkLibrary(kaldi_lm);
+        lib.linkLibrary(kaldi_rnnlm);
+        lib.linkLibrary(kaldi_nnet2);
+        lib.linkLibrary(kaldi_online2);
 
         // NOTE: needed for `kaldi-matrix`
         if (target.isDarwin()) {
@@ -387,6 +780,8 @@ pub fn build(b: *std.Build) void {
             //
             // TODO: use OpenBLAS instead to avoid this (requires Kaldi changes).
             lib.linkFramework("Accelerate");
+        } else if (target.isLinux()) {
+            lib.addLibraryPath(.{ .path = "/usr/lib/x86_64-linux-gnu" });
         }
 
         lib.pie = true;
@@ -411,18 +806,18 @@ pub fn build(b: *std.Build) void {
             static_lib,
             shared_lib,
         };
-        const srcs: []const []const u8 = &.{
-            "src/language_model.cc",
-            "src/model.cc",
-            "src/recognizer.cc",
-            "src/spk_model.cc",
-            "src/vosk_api.cc",
-        };
-
         for (libs) |lib| {
-            for (srcs) |src| {
-                lib.addCSourceFile(.{ .file = vosk_dep.path(src), .flags = &.{"-std=c++17"} });
-            }
+            lib.addCSourceFiles(.{
+                .dependency = vosk_dep,
+                .files = &.{
+                    "src/language_model.cc",
+                    "src/model.cc",
+                    "src/recognizer.cc",
+                    "src/spk_model.cc",
+                    "src/vosk_api.cc",
+                },
+                .flags = &.{"-std=c++17"},
+            });
 
             lib.addIncludePath(kaldi_dep.path("src"));
             lib.addIncludePath(fst_dep.path("src/include"));
@@ -446,6 +841,8 @@ pub fn build(b: *std.Build) void {
                 lib.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
 
                 lib.linkFramework("Accelerate");
+            } else if (target.isLinux()) {
+                lib.addLibraryPath(.{ .path = "/usr/lib/x86_64-linux-gnu" });
             }
 
             lib.strip = true;
@@ -464,7 +861,28 @@ pub fn build(b: *std.Build) void {
         .inputs = &.{
             fst.getEmittedBin(),
             fstngram.getEmittedBin(),
+
+            kaldi_base.getEmittedBin(),
+            kaldi_matrix.getEmittedBin(),
+            kaldi_util.getEmittedBin(),
+            kaldi_tree.getEmittedBin(),
+            kaldi_gmm.getEmittedBin(),
+            kaldi_transform.getEmittedBin(),
+            kaldi_ivector.getEmittedBin(),
+            kaldi_cudamatrix.getEmittedBin(),
+            kaldi_hmm.getEmittedBin(),
+            kaldi_lat.getEmittedBin(),
+            kaldi_fstext.getEmittedBin(),
+            kaldi_chain.getEmittedBin(),
+            kaldi_decoder.getEmittedBin(),
+            kaldi_nnet3.getEmittedBin(),
+            kaldi_feat.getEmittedBin(),
+            kaldi_lm.getEmittedBin(),
+            kaldi_rnnlm.getEmittedBin(),
+            kaldi_nnet2.getEmittedBin(),
+            kaldi_online2.getEmittedBin(),
             kaldi.getEmittedBin(),
+
             static_lib.getEmittedBin(),
         },
     });
@@ -483,6 +901,7 @@ pub fn build(b: *std.Build) void {
     var additional_args = std.ArrayList([]const u8).init(b.allocator);
     {
         additional_args.append("-lc++") catch @panic("appendSlice");
+        additional_args.append("-Wl,-s") catch @panic("appendSlice");
 
         if (target.isDarwin()) {
             const target_info = std.zig.system.NativeTargetInfo.detect(target) catch unreachable;
@@ -494,7 +913,11 @@ pub fn build(b: *std.Build) void {
                 b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }),
                 "-framework",
                 "Accelerate",
-                "-lc++",
+            }) catch @panic("appendSlice");
+        } else if (target.isLinux()) {
+            additional_args.appendSlice(&.{
+                "-lopenblas",
+                b.fmt("-L{s}", .{"/usr/lib/x86_64-linux-gnu"}),
             }) catch @panic("appendSlice");
         }
     }
@@ -552,6 +975,9 @@ pub fn build(b: *std.Build) void {
             exe.addSystemFrameworkPath(.{ .path = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
             exe.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
             exe.linkFramework("Accelerate");
+        } else if (target.isLinux()) {
+            exe.linkSystemLibrary("openblas");
+            exe.addLibraryPath(.{ .path = "/usr/lib/x86_64-linux-gnu" });
         }
     }
 
@@ -587,6 +1013,9 @@ pub fn build(b: *std.Build) void {
             exe.addSystemFrameworkPath(.{ .path = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
             exe.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
             exe.linkFramework("Accelerate");
+        } else if (target.isLinux()) {
+            exe.linkSystemLibrary("openblas");
+            exe.addLibraryPath(.{ .path = "/usr/lib/x86_64-linux-gnu" });
         }
     }
 
@@ -627,6 +1056,8 @@ pub fn build(b: *std.Build) void {
             exe.addSystemFrameworkPath(.{ .path = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
             exe.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
             exe.linkFramework("Accelerate");
+        } else if (target.isLinux()) {
+            exe.addLibraryPath(.{ .path = "/usr/lib/x86_64-linux-gnu" });
         }
     }
 }
@@ -734,3 +1165,24 @@ const DynamicArchiveStep = struct {
         return self;
     }
 };
+
+fn kaldiLibrary(
+    lib: *std.Build.Step.Compile,
+    kaldi_dep: *std.Build.Dependency,
+    fst_dep: *std.Build.Dependency,
+    srcs: []const []const u8,
+) void {
+    lib.addCSourceFiles(.{
+        .dependency = kaldi_dep,
+        .files = srcs,
+        .flags = &.{"-std=c++17"},
+    });
+
+    lib.addIncludePath(kaldi_dep.path("src"));
+    lib.addIncludePath(kaldi_dep.path("src/base"));
+    lib.addIncludePath(fst_dep.path("src/include"));
+    lib.linkLibCpp();
+
+    lib.pie = true;
+    lib.strip = true;
+}
