@@ -18,6 +18,7 @@ pub fn build(b: *std.Build) void {
         .name = "fst",
         .target = target,
         .optimize = .ReleaseFast,
+        .strip = true,
     });
     {
         const lib = fst;
@@ -44,7 +45,6 @@ pub fn build(b: *std.Build) void {
         lib.linkLibCpp();
 
         lib.pie = true;
-        lib.strip = true;
     }
 
     //
@@ -53,6 +53,7 @@ pub fn build(b: *std.Build) void {
         .name = "fstngram",
         .target = target,
         .optimize = .ReleaseFast,
+        .strip = true,
     });
     {
         const lib = fstngram;
@@ -70,7 +71,6 @@ pub fn build(b: *std.Build) void {
         lib.linkLibrary(fst);
 
         lib.pie = true;
-        lib.strip = true;
     }
 
     //--
@@ -83,6 +83,7 @@ pub fn build(b: *std.Build) void {
         .name = "kaldi-base",
         .target = target,
         .optimize = kaldi_optimize,
+        .strip = true,
     });
     {
         const lib = kaldi_base;
@@ -105,6 +106,7 @@ pub fn build(b: *std.Build) void {
         .name = "kaldi-matrix",
         .target = target,
         .optimize = kaldi_optimize,
+        .strip = true,
     });
     {
         const lib = kaldi_matrix;
@@ -128,9 +130,8 @@ pub fn build(b: *std.Build) void {
         // lib.defineCMacro("HAVE_OPENBLAS", "1");
 
         // NOTE: needed for `kaldi-matrix`
-        if (target.isDarwin()) {
-            const target_info = std.zig.system.NativeTargetInfo.detect(target) catch unreachable;
-            const sdk = std.zig.system.darwin.getSdk(b.allocator, target_info.target) orelse
+        if (target.result.os.tag == .macos) {
+            const sdk = std.zig.system.darwin.getSdk(b.allocator, b.host.result) orelse
                 @panic("macOS SDK is missing");
             lib.addSystemIncludePath(.{ .path = b.pathJoin(&.{ sdk, "/usr/include" }) });
             lib.addSystemFrameworkPath(.{ .path = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
@@ -145,7 +146,7 @@ pub fn build(b: *std.Build) void {
             //
             // TODO: use OpenBLAS instead to avoid this (requires Kaldi changes).
             lib.linkFramework("Accelerate");
-        } else if (target.isLinux()) {
+        } else if (target.result.os.tag == .linux) {
             lib.addIncludePath(kaldi_dep.path("tools/CLAPACK"));
 
             // sudo apt-get install -y libopenblas-dev
@@ -160,6 +161,7 @@ pub fn build(b: *std.Build) void {
         .name = "kaldi-util",
         .target = target,
         .optimize = kaldi_optimize,
+        .strip = true,
     });
     {
         const lib = kaldi_util;
@@ -185,6 +187,7 @@ pub fn build(b: *std.Build) void {
         .name = "kaldi-tree",
         .target = target,
         .optimize = kaldi_optimize,
+        .strip = true,
     });
     {
         const lib = kaldi_tree;
@@ -211,6 +214,7 @@ pub fn build(b: *std.Build) void {
         .name = "kaldi-gmm",
         .target = target,
         .optimize = kaldi_optimize,
+        .strip = true,
     });
     {
         const lib = kaldi_gmm;
@@ -241,6 +245,7 @@ pub fn build(b: *std.Build) void {
         .name = "kaldi-transform",
         .target = target,
         .optimize = kaldi_optimize,
+        .strip = true,
     });
 
     {
@@ -276,6 +281,7 @@ pub fn build(b: *std.Build) void {
         .name = "kaldi-ivector",
         .target = target,
         .optimize = kaldi_optimize,
+        .strip = true,
     });
     {
         const lib = kaldi_ivector;
@@ -302,6 +308,7 @@ pub fn build(b: *std.Build) void {
         .name = "kaldi-cudamatrix",
         .target = target,
         .optimize = kaldi_optimize,
+        .strip = true,
     });
     {
         const lib = kaldi_cudamatrix;
@@ -336,6 +343,7 @@ pub fn build(b: *std.Build) void {
         .name = "kaldi-hmm",
         .target = target,
         .optimize = kaldi_optimize,
+        .strip = true,
     });
     {
         const lib = kaldi_hmm;
@@ -359,6 +367,7 @@ pub fn build(b: *std.Build) void {
         .name = "kaldi-lat",
         .target = target,
         .optimize = kaldi_optimize,
+        .strip = true,
     });
     {
         const lib = kaldi_lat;
@@ -390,6 +399,7 @@ pub fn build(b: *std.Build) void {
         .name = "kaldi-fstext",
         .target = target,
         .optimize = kaldi_optimize,
+        .strip = true,
     });
     {
         const lib = kaldi_fstext;
@@ -408,6 +418,7 @@ pub fn build(b: *std.Build) void {
         .name = "kaldi-chain",
         .target = target,
         .optimize = kaldi_optimize,
+        .strip = true,
     });
     {
         const lib = kaldi_chain;
@@ -438,6 +449,7 @@ pub fn build(b: *std.Build) void {
         .name = "kaldi-decoder",
         .target = target,
         .optimize = kaldi_optimize,
+        .strip = true,
     });
     {
         const lib = kaldi_decoder;
@@ -472,6 +484,7 @@ pub fn build(b: *std.Build) void {
         .name = "kaldi-nnet3",
         .target = target,
         .optimize = kaldi_optimize,
+        .strip = true,
     });
     {
         const lib = kaldi_nnet3;
@@ -545,6 +558,7 @@ pub fn build(b: *std.Build) void {
         .name = "kaldi-feat",
         .target = target,
         .optimize = kaldi_optimize,
+        .strip = true,
     });
     {
         const lib = kaldi_feat;
@@ -577,6 +591,7 @@ pub fn build(b: *std.Build) void {
         .name = "kaldi-lm",
         .target = target,
         .optimize = kaldi_optimize,
+        .strip = true,
     });
     {
         const lib = kaldi_lm;
@@ -601,6 +616,7 @@ pub fn build(b: *std.Build) void {
         .name = "kaldi-rnnlm",
         .target = target,
         .optimize = kaldi_optimize,
+        .strip = true,
     });
     {
         const lib = kaldi_rnnlm;
@@ -635,6 +651,7 @@ pub fn build(b: *std.Build) void {
         .name = "kaldi-nnet2",
         .target = target,
         .optimize = kaldi_optimize,
+        .strip = true,
     });
     {
         const lib = kaldi_nnet2;
@@ -685,6 +702,7 @@ pub fn build(b: *std.Build) void {
         .name = "kaldi-online2",
         .target = target,
         .optimize = kaldi_optimize,
+        .strip = true,
     });
     {
         const lib = kaldi_online2;
@@ -728,6 +746,8 @@ pub fn build(b: *std.Build) void {
         .name = "kaldi",
         .target = target,
         .optimize = kaldi_optimize,
+        .strip = true,
+        .root_source_file = b.addWriteFiles().add("empty.c", ""),
     });
     {
         const lib = kaldi;
@@ -763,9 +783,8 @@ pub fn build(b: *std.Build) void {
         lib.linkLibrary(kaldi_online2);
 
         // NOTE: needed for `kaldi-matrix`
-        if (target.isDarwin()) {
-            const target_info = std.zig.system.NativeTargetInfo.detect(target) catch unreachable;
-            const sdk = std.zig.system.darwin.getSdk(b.allocator, target_info.target) orelse
+        if (target.result.os.tag == .macos) {
+            const sdk = std.zig.system.darwin.getSdk(b.allocator, b.host.result) orelse
                 @panic("macOS SDK is missing");
             lib.addSystemIncludePath(.{ .path = b.pathJoin(&.{ sdk, "/usr/include" }) });
             lib.addSystemFrameworkPath(.{ .path = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
@@ -780,12 +799,11 @@ pub fn build(b: *std.Build) void {
             //
             // TODO: use OpenBLAS instead to avoid this (requires Kaldi changes).
             lib.linkFramework("Accelerate");
-        } else if (target.isLinux()) {
+        } else if (target.result.os.tag == .linux) {
             lib.addLibraryPath(.{ .path = "/usr/lib/x86_64-linux-gnu" });
         }
 
         lib.pie = true;
-        lib.strip = true;
     }
 
     //----
@@ -794,11 +812,13 @@ pub fn build(b: *std.Build) void {
         .name = "vosk-static",
         .target = target,
         .optimize = optimize,
+        .strip = true,
     });
     const shared_lib = b.addSharedLibrary(.{
         .name = "vosk-shared",
         .target = target,
         .optimize = optimize,
+        .strip = true,
     });
 
     {
@@ -832,20 +852,18 @@ pub fn build(b: *std.Build) void {
             );
 
             // TODO: why isn't `linkLibrary(kaldi)` enough?
-            if (target.isDarwin()) {
-                const target_info = std.zig.system.NativeTargetInfo.detect(target) catch unreachable;
-                const sdk = std.zig.system.darwin.getSdk(b.allocator, target_info.target) orelse
+            if (target.result.os.tag == .macos) {
+                const sdk = std.zig.system.darwin.getSdk(b.allocator, b.host.result) orelse
                     @panic("macOS SDK is missing");
                 lib.addSystemIncludePath(.{ .path = b.pathJoin(&.{ sdk, "/usr/include" }) });
                 lib.addSystemFrameworkPath(.{ .path = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
                 lib.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
 
                 lib.linkFramework("Accelerate");
-            } else if (target.isLinux()) {
+            } else if (target.result.os.tag == .linux) {
                 lib.addLibraryPath(.{ .path = "/usr/lib/x86_64-linux-gnu" });
             }
 
-            lib.strip = true;
             if (lib.linkage == .static) {
                 lib.pie = true;
             }
@@ -857,7 +875,7 @@ pub fn build(b: *std.Build) void {
     //--
 
     const final_static_lib = ArchiveStep.create(b, .{
-        .out_name = b.fmt("libvosk{s}", .{target.staticLibSuffix()}),
+        .out_name = b.fmt("libvosk{s}", .{target.result.staticLibSuffix()}),
         .inputs = &.{
             fst.getEmittedBin(),
             fstngram.getEmittedBin(),
@@ -903,9 +921,8 @@ pub fn build(b: *std.Build) void {
         additional_args.append("-lc++") catch @panic("appendSlice");
         additional_args.append("-Wl,-s") catch @panic("appendSlice");
 
-        if (target.isDarwin()) {
-            const target_info = std.zig.system.NativeTargetInfo.detect(target) catch unreachable;
-            const sdk = std.zig.system.darwin.getSdk(b.allocator, target_info.target) orelse
+        if (target.result.os.tag == .macos) {
+            const sdk = std.zig.system.darwin.getSdk(b.allocator, b.host.result) orelse
                 @panic("macOS SDK is missing");
 
             additional_args.appendSlice(&.{
@@ -914,7 +931,7 @@ pub fn build(b: *std.Build) void {
                 "-framework",
                 "Accelerate",
             }) catch @panic("appendSlice");
-        } else if (target.isLinux()) {
+        } else if (target.result.os.tag == .linux) {
             additional_args.appendSlice(&.{
                 "-lopenblas",
                 b.fmt("-L{s}", .{"/usr/lib/x86_64-linux-gnu"}),
@@ -923,7 +940,7 @@ pub fn build(b: *std.Build) void {
     }
 
     const final_shared_lib = DynamicArchiveStep.create(b, .{
-        .out_name = b.fmt("libvosk{s}", .{target.dynamicLibSuffix()}),
+        .out_name = b.fmt("libvosk{s}", .{target.result.dynamicLibSuffix()}),
         .target = target,
         .input = final_static_lib.output,
         .additional_args = additional_args.items,
@@ -944,16 +961,25 @@ pub fn build(b: *std.Build) void {
         step.dependOn(&installHeader.step);
     }
 
+    const module = b.addModule("vosk", .{
+        .root_source_file = .{ .path = "src/lib.zig" },
+        .link_libcpp = true,
+    });
+    {
+        module.linkLibrary(static_lib);
+    }
+
     //--------------------------------
 
     const c_example = b.addExecutable(.{
         .name = "c-example",
         .target = target,
         .optimize = optimize,
-        .root_source_file = .{ .path = "src/example.c" },
     });
     {
         const exe = c_example;
+
+        exe.addCSourceFile(.{ .file = .{ .path = "src/example.c" }, .flags = &.{} });
 
         // exe.linkLibrary(static_lib);
         exe.addObjectFile(final_static_lib.output);
@@ -961,21 +987,20 @@ pub fn build(b: *std.Build) void {
         exe.linkLibCpp();
 
         const run = b.addRunArtifact(exe);
-        run.addFileSourceArg(model_dep.path(""));
-        run.addFileSourceArg(vosk_dep.path("python/example/test.wav"));
+        run.addFileArg(model_dep.path(""));
+        run.addFileArg(vosk_dep.path("python/example/test.wav"));
 
         const step = b.step("c-example", "Run the C example");
         step.dependOn(&run.step);
 
-        if (target.isDarwin()) {
-            const target_info = std.zig.system.NativeTargetInfo.detect(target) catch unreachable;
-            const sdk = std.zig.system.darwin.getSdk(b.allocator, target_info.target) orelse
+        if (target.result.os.tag == .macos) {
+            const sdk = std.zig.system.darwin.getSdk(b.allocator, b.host.result) orelse
                 @panic("macOS SDK is missing");
             exe.addSystemIncludePath(.{ .path = b.pathJoin(&.{ sdk, "/usr/include" }) });
             exe.addSystemFrameworkPath(.{ .path = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
             exe.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
             exe.linkFramework("Accelerate");
-        } else if (target.isLinux()) {
+        } else if (target.result.os.tag == .linux) {
             exe.linkSystemLibrary("openblas");
             exe.addLibraryPath(.{ .path = "/usr/lib/x86_64-linux-gnu" });
         }
@@ -999,21 +1024,20 @@ pub fn build(b: *std.Build) void {
         exe.linkLibCpp();
 
         const run = b.addRunArtifact(exe);
-        run.addFileSourceArg(model_dep.path(""));
-        run.addFileSourceArg(vosk_dep.path("python/example/test.wav"));
+        run.addFileArg(model_dep.path(""));
+        run.addFileArg(vosk_dep.path("python/example/test.wav"));
 
         const step = b.step("zig-example", "Run the zig example");
         step.dependOn(&run.step);
 
-        if (target.isDarwin()) {
-            const target_info = std.zig.system.NativeTargetInfo.detect(target) catch unreachable;
-            const sdk = std.zig.system.darwin.getSdk(b.allocator, target_info.target) orelse
+        if (target.result.os.tag == .macos) {
+            const sdk = std.zig.system.darwin.getSdk(b.allocator, b.host.result) orelse
                 @panic("macOS SDK is missing");
             exe.addSystemIncludePath(.{ .path = b.pathJoin(&.{ sdk, "/usr/include" }) });
             exe.addSystemFrameworkPath(.{ .path = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
             exe.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
             exe.linkFramework("Accelerate");
-        } else if (target.isLinux()) {
+        } else if (target.result.os.tag == .linux) {
             exe.linkSystemLibrary("openblas");
             exe.addLibraryPath(.{ .path = "/usr/lib/x86_64-linux-gnu" });
         }
@@ -1042,21 +1066,20 @@ pub fn build(b: *std.Build) void {
         exe.linkLibCpp();
 
         const run = b.addRunArtifact(exe);
-        run.addFileSourceArg(model_dep.path(""));
-        run.addFileSourceArg(vosk_dep.path("python/example/test.wav"));
+        run.addFileArg(model_dep.path(""));
+        run.addFileArg(vosk_dep.path("python/example/test.wav"));
 
         const step = b.step("zig-example-shared", "Run the zig shared-library example");
         step.dependOn(&run.step);
 
-        if (target.isDarwin()) {
-            const target_info = std.zig.system.NativeTargetInfo.detect(target) catch unreachable;
-            const sdk = std.zig.system.darwin.getSdk(b.allocator, target_info.target) orelse
+        if (target.result.os.tag == .macos) {
+            const sdk = std.zig.system.darwin.getSdk(b.allocator, b.host.result) orelse
                 @panic("macOS SDK is missing");
             exe.addSystemIncludePath(.{ .path = b.pathJoin(&.{ sdk, "/usr/include" }) });
             exe.addSystemFrameworkPath(.{ .path = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
             exe.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
             exe.linkFramework("Accelerate");
-        } else if (target.isLinux()) {
+        } else if (target.result.os.tag == .linux) {
             exe.addLibraryPath(.{ .path = "/usr/lib/x86_64-linux-gnu" });
         }
     }
@@ -1068,18 +1091,18 @@ pub fn build(b: *std.Build) void {
 //
 const ArchiveStep = struct {
     step: *std.Build.Step,
-    output: std.Build.FileSource,
+    output: std.Build.LazyPath,
     opts: Options,
 
     const Options = struct {
         out_name: []const u8,
-        inputs: []const std.Build.FileSource,
+        inputs: []const std.Build.LazyPath,
     };
 
     fn create(b: *std.Build, opts: Options) *ArchiveStep {
         const self = b.allocator.create(ArchiveStep) catch @panic("OOM");
 
-        const run_step = std.Build.RunStep.create(b, b.fmt(
+        const run_step = std.Build.Step.Run.create(b, b.fmt(
             "create-static-archive-{s}",
             .{opts.out_name},
         ));
@@ -1088,7 +1111,7 @@ const ArchiveStep = struct {
         run_step.addArgs(&.{"-c"});
         for (opts.inputs) |input_lib| {
             run_step.addArgs(&.{"-L"});
-            run_step.addFileSourceArg(input_lib);
+            run_step.addFileArg(input_lib);
         }
 
         self.* = .{
@@ -1111,21 +1134,21 @@ const ArchiveStep = struct {
 //
 const DynamicArchiveStep = struct {
     step: *std.Build.Step,
-    output: std.Build.FileSource,
+    output: std.Build.LazyPath,
     opts: Options,
 
     const Options = struct {
         out_name: []const u8,
-        input: std.Build.FileSource,
+        input: std.Build.LazyPath,
         additional_args: []const []const u8,
-        target: std.zig.CrossTarget,
+        target: std.Build.ResolvedTarget,
     };
 
     fn create(b: *std.Build, opts: Options) *DynamicArchiveStep {
         const self = b.allocator.create(DynamicArchiveStep) catch @panic("OOM");
-        const triple = opts.target.zigTriple(b.allocator) catch @panic("OOM, zigTriple");
+        const triple = opts.target.result.zigTriple(b.allocator) catch @panic("OOM, zigTriple");
 
-        const run_step = std.Build.RunStep.create(b, b.fmt(
+        const run_step = std.Build.Step.Run.create(b, b.fmt(
             "create-dynamic-archive-{s}",
             .{opts.out_name},
         ));
@@ -1144,7 +1167,7 @@ const DynamicArchiveStep = struct {
             "-shared",
             "-Wl,--whole-archive",
         });
-        run_step.addFileSourceArg(opts.input);
+        run_step.addFileArg(opts.input);
         run_step.addArgs(&.{
             "-Wl,--no-whole-archive",
             "-o",
@@ -1184,5 +1207,4 @@ fn kaldiLibrary(
     lib.linkLibCpp();
 
     lib.pie = true;
-    lib.strip = true;
 }
