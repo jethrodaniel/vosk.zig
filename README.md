@@ -123,9 +123,9 @@ Add to your `build.zig.zon`:
     .name = "example",
     .version = "0.0.0",
     .dependencies = .{
-        .vosk_zig = .{
-            .url = "git+https://github.com/jethrodaniel/vosk.zig#v0.1.0",
-            .hash = "12208dd0f3811388fc7d347bbe9d9492ce6ecf8427d5a84e67d5b987851cec847406",
+        .vosk_source = .{
+            .url = "git+https://github.com/jethrodaniel/vosk.zig#dev",
+            .hash = "12206658cfeb9fab1531ea506761d158c02b3a4fba83ba593c2bdc32af3f917c1134",
         },
         .vosk_x86_64_macos = .{
             .url = "https://github.com/jethrodaniel/vosk.zig/releases/download/v0.1.0/vosk-0.3.45-x86_64-macos.tar.gz",
@@ -156,36 +156,49 @@ Update your `build.zig`:
 
     const use_precompiled_vosk = b.option(bool, "use_precompiled_vosk",
         \\Use precompiled Vosk (default: true)
-    ) orelse true;
+    ) orelse (target.result.os.tag == .macos);
 
     if (use_precompiled_vosk and
-        target.getOsTag() != .macos and
-        !(target.getCpuArch() == .aarch64 or target.getCpuArch() == .x86_64))
+        !(target.result.cpu.arch == .aarch64 or target.result.cpu.arch == .x86_64))
     {
-        const triple = target.zigTriple(b.allocator) catch @panic("OOM, zigTriple");
+        const triple = target.result.zigTriple(b.allocator) catch @panic("OOM, zigTriple");
         @panic(b.fmt("arch {s} is invalid for vosk", .{triple}));
     }
-    const vosk_dep_name = if (use_precompiled_vosk and target.getCpuArch() == .aarch64)
+    const vosk_dep_name = if (use_precompiled_vosk and target.result.cpu.arch == .aarch64)
         "vosk_aarch64_macos"
-    else if (use_precompiled_vosk and target.getCpuArch() == .x86_64)
+    else if (use_precompiled_vosk and target.result.cpu.arch == .x86_64)
         "vosk_x86_64_macos"
     else
-        "vosk_zig";
+        "vosk_source";
 
     const vosk_dep = b.dependency(vosk_dep_name, .{
         .target = target,
         .optimize = .ReleaseFast,
     });
+
+    const vosk_precompiled_module = b.createModule(.{
+        .root_source_file = b.addWriteFiles().add("lib.zig",
+            \\pub const c = @cImport({
+            \\    @cInclude("vosk_api.h");
+            \\});
+        ),
+        .link_libcpp = true,
+        .target = target,
+    });
     {
-        if (use_precompiled_vosk) {
-            exe.linkSystemLibrary("vosk");
-            exe.addLibraryPath(vosk_dep.path("lib"));
-            exe.addRPath(vosk_dep.path("lib"));
-            exe.addIncludePath(vosk_dep.path("include"));
-        } else {
-            exe.linkLibrary(vosk_dep.artifact("vosk-static"));
-        }
+        const module = vosk_precompiled_module;
+        module.linkSystemLibrary("vosk", .{ .needed = true });
+        module.addLibraryPath(vosk_dep.path("lib"));
+        module.addIncludePath(vosk_dep.path("include"));
     }
+
+    const vosk_module = if (use_precompiled_vosk)
+        vosk_precompiled_module
+    else
+        vosk_dep.module("vosk");
+
+    exe.root_module.addImport("vosk", vosk_module);
+
 
     // 2. use a vosk model
 
@@ -197,8 +210,6 @@ Update your `build.zig`:
         .install_subdir = "model",
     });
     exe.step.dependOn(&install_model.step);
-
-    // For more details, see src/example.zig and `zig build zig-example`.
 ```
 
 ## License
