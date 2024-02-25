@@ -57,3 +57,4 @@ jobs:
             vosk
             !**/*.DS_Store
           if-no-files-found: error
+          retention-days: 1
