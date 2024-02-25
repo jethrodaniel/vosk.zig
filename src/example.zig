@@ -6,8 +6,8 @@ const c = @cImport({
     @cInclude("vosk_api.h");
 });
 
-pub const std_options = struct {
-    pub const log_level = .debug;
+pub const std_options: std.Options = .{
+    .log_level = .debug,
 };
 
 pub fn main() !void {

@@ -15,7 +15,7 @@ Building [vosk-api](https://github.com/alphacep/vosk-api) using [zig](https://zi
 Install zig, if you haven't already, e.g:
 
 ```
-ZIG=zig-macos-x86_64-0.12.0-dev.1861+412999621
+ZIG=zig-macos-x86_64-0.12.0-dev.2990+31763d28c
 wget -nv https://ziglang.org/builds/${ZIG}.tar.xz
 tar xf ${ZIG}.tar.xz
 cp -v ${ZIG}/zig /usr/local/bin/zig
@@ -79,9 +79,9 @@ vosk
 ## Examples
 
 ```sh
-zig build c-example
-zig build zig-example
-zig build zig-example-shared
+zig build -Doptimize=ReleaseFast c-example
+zig build -Doptimize=ReleaseFast zig-example
+zig build -Doptimize=ReleaseFast zig-example-shared
 ```
 
 ## Usage

@@ -23,7 +23,7 @@ pub fn build(b: *std.Build) void {
     {
         const lib = fst;
         lib.addCSourceFiles(.{
-            .dependency = fst_dep,
+            .root = fst_dep.path(""),
             .files = &.{
                 "src/lib/compat.cc",
                 "src/lib/encode.cc",
@@ -58,7 +58,7 @@ pub fn build(b: *std.Build) void {
     {
         const lib = fstngram;
         lib.addCSourceFiles(.{
-            .dependency = fst_dep,
+            .root = fst_dep.path(""),
             .files = &.{
                 "src/extensions/ngram/bitmap-index.cc",
                 "src/extensions/ngram/ngram-fst.cc",
@@ -828,7 +828,7 @@ pub fn build(b: *std.Build) void {
         };
         for (libs) |lib| {
             lib.addCSourceFiles(.{
-                .dependency = vosk_dep,
+                .root = vosk_dep.path(""),
                 .files = &.{
                     "src/language_model.cc",
                     "src/model.cc",
@@ -1106,7 +1106,7 @@ const ArchiveStep = struct {
             "create-static-archive-{s}",
             .{opts.out_name},
         ));
-        run_step.addArgs(&.{ b.zig_exe, "ar", "q" });
+        run_step.addArgs(&.{ b.graph.zig_exe, "ar", "q" });
         const output = run_step.addOutputFileArg(opts.out_name);
         run_step.addArgs(&.{"-c"});
         for (opts.inputs) |input_lib| {
@@ -1160,7 +1160,7 @@ const DynamicArchiveStep = struct {
         //
         // TODO: get zig to do this as well.
         run_step.addArgs(&.{
-            b.zig_exe,
+            b.graph.zig_exe,
             "cc",
             "-target",
             triple,
@@ -1196,7 +1196,7 @@ fn kaldiLibrary(
     srcs: []const []const u8,
 ) void {
     lib.addCSourceFiles(.{
-        .dependency = kaldi_dep,
+        .root = kaldi_dep.path(""),
         .files = srcs,
         .flags = &.{"-std=c++17"},
     });
