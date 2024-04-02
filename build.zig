@@ -7,7 +7,7 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const vosk_dep = b.dependency("vosk_src", .{});
+    const vosk_dep = b.dependency("vosk", .{});
     const fst_dep = b.dependency("openfst", .{});
     const kaldi_dep = b.dependency("kaldi", .{});
     const model_dep = b.dependency("vosk_model_small_en_us_0_15", .{});

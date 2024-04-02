@@ -10,7 +10,7 @@
         "src/lib.zig",
     },
     .dependencies = .{
-        .vosk_src = .{
+        .vosk = .{
             .url = "git+https://github.com/alphacep/vosk-api#v0.3.45",
             .hash = "1220bfb3e187fa21a987ca256fe55ed378f0a2a017d711352b932f320f456de1b362",
         },
