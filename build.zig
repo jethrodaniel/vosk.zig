@@ -971,13 +971,13 @@ pub fn build(b: *std.Build) void {
 
     //--------------------------------
 
-    const c_example = b.addExecutable(.{
-        .name = "c-example",
+    const example_static = b.addExecutable(.{
+        .name = "example-static",
         .target = target,
         .optimize = optimize,
     });
     {
-        const exe = c_example;
+        const exe = example_static;
 
         exe.addCSourceFile(.{ .file = .{ .path = "src/example.c" }, .flags = &.{} });
 
@@ -990,7 +990,7 @@ pub fn build(b: *std.Build) void {
         run.addFileArg(model_dep.path(""));
         run.addFileArg(vosk_dep.path("python/example/test.wav"));
 
-        const step = b.step("c-example", "Run the C example");
+        const step = b.step("example-static", "Run the static library example");
         step.dependOn(&run.step);
 
         if (target.result.os.tag == .macos) {
@@ -1008,52 +1008,36 @@ pub fn build(b: *std.Build) void {
 
     //--
 
-    const zig_example = b.addExecutable(.{
-        .name = "zig-example",
+    const example_zig = b.addExecutable(.{
+        .name = "example-zig",
         .target = target,
-        // TODO: this segfaults without this...
-        .optimize = .ReleaseFast,
+        .optimize = optimize,
         .root_source_file = .{ .path = "src/example.zig" },
     });
     {
-        const exe = zig_example;
+        const exe = example_zig;
 
-        // exe.linkLibrary(static_lib);
-        exe.addObjectFile(final_static_lib.output);
-        exe.addIncludePath(vosk_dep.path("src"));
-        exe.linkLibCpp();
+        exe.root_module.addImport("vosk", module);
 
         const run = b.addRunArtifact(exe);
         run.addFileArg(model_dep.path(""));
         run.addFileArg(vosk_dep.path("python/example/test.wav"));
 
-        const step = b.step("zig-example", "Run the zig example");
+        const step = b.step("example-zig", "Run the zig example");
         step.dependOn(&run.step);
-
-        if (target.result.os.tag == .macos) {
-            const sdk = std.zig.system.darwin.getSdk(b.allocator, b.host.result) orelse
-                @panic("macOS SDK is missing");
-            exe.addSystemIncludePath(.{ .path = b.pathJoin(&.{ sdk, "/usr/include" }) });
-            exe.addSystemFrameworkPath(.{ .path = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
-            exe.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
-            exe.linkFramework("Accelerate");
-        } else if (target.result.os.tag == .linux) {
-            exe.linkSystemLibrary("openblas");
-            exe.addLibraryPath(.{ .path = "/usr/lib/x86_64-linux-gnu" });
-        }
     }
 
     //--
 
-    const zig_example_shared = b.addExecutable(.{
-        .name = "zig-example-shared",
+    const example_shared = b.addExecutable(.{
+        .name = "example-shared",
         .target = target,
         // TODO: this segfaults without this...
         .optimize = .ReleaseFast,
-        .root_source_file = .{ .path = "src/example.zig" },
     });
     {
-        const exe = zig_example_shared;
+        const exe = example_shared;
+        exe.addCSourceFile(.{ .file = .{ .path = "src/example.c" }, .flags = &.{} });
 
         // exe.linkLibrary(shared_lib);
 
@@ -1069,7 +1053,7 @@ pub fn build(b: *std.Build) void {
         run.addFileArg(model_dep.path(""));
         run.addFileArg(vosk_dep.path("python/example/test.wav"));
 
-        const step = b.step("zig-example-shared", "Run the zig shared-library example");
+        const step = b.step("example-shared", "Run the shared-library example");
         step.dependOn(&run.step);
 
         if (target.result.os.tag == .macos) {

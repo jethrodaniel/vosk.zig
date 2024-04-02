@@ -7,26 +7,8 @@ Building [vosk-api](https://github.com/alphacep/vosk-api) using [zig](https://zi
 
 ## Status
 
-- currently only supports MacOS (x86/arm64)
-  - NOTE: requires `-framework Accelerate`
-
-## Setup
-
-Install zig, if you haven't already, e.g:
-
-```
-ZIG=zig-macos-x86_64-0.12.0-dev.2990+31763d28c
-wget -nv https://ziglang.org/builds/${ZIG}.tar.xz
-tar xf ${ZIG}.tar.xz
-cp -v ${ZIG}/zig /usr/local/bin/zig
-zig version
-```
-
-Then clone this project:
-```sh
-git clone https://github.com/jethrodaniel/vosk.zig
-cd vosk.zig
-```
+- currently MacOS only (using `-framework Accelerate`)
+- linux is _almost_ there, but depends on your system's openblas
 
 ## Building
 
@@ -79,9 +61,9 @@ vosk
 ## Examples
 
 ```sh
-zig build -Doptimize=ReleaseFast c-example
-zig build -Doptimize=ReleaseFast zig-example
-zig build -Doptimize=ReleaseFast zig-example-shared
+zig build -Doptimize=ReleaseFast example-static
+zig build -Doptimize=ReleaseFast example-shared
+zig build -Doptimize=ReleaseFast example-zig
 ```
 
 ## Usage
@@ -117,14 +99,10 @@ bundle exec ruby examples/transcribe.rb
 
 ### Zig
 
-See the `examples` folder, e.g:
-```
-cd examples
-zig build run
-```
+See the `example-zig` step in `build.zig`.
 
 ## License
 
 [Apache-2.0](https://spdx.org/licenses/Apache-2.0.html), same as [Vosk](https://github.com/alphacep/vosk-api).
 
-See the [SPDX identifiers](https://spdx.dev/)  on each source code file.
+See the [SPDX identifiers](https://spdx.dev/) on each source code file.
