@@ -17,8 +17,8 @@ jobs:
     env:
       CI: true
       HOMEBREW_NO_INSTALL_CLEANUP: true
-      ZIG: zig-macos-x86_64-0.12.0-dev.3496+a2df84d0f
-    runs-on: macos-14
+      ZIG: zig-macos-aarch64-0.12.0-dev.3496+a2df84d0f
+    runs-on: macos-14-arm64
 
     steps:
       - name: checkout code
