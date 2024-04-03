@@ -7,19 +7,17 @@ Building [vosk-api](https://github.com/alphacep/vosk-api) using [zig](https://zi
 
 ## Status
 
-- currently MacOS only (using `-framework Accelerate`)
-- linux is _almost_ there, but depends on your system's openblas
+- MacOS (using `-framework Accelerate`)
+- Linux (using `linkSystemLibrary("openblas")`)
 
 ## Building
 
-To build dynamic libraries for x86/arm64:
-
 ```sh
-zig build -Doptimize=ReleaseFast -Dtarget=x86_64-macos.10.13...13.6.3-none -p vosk/x86_64-macos shared
-zig build -Doptimize=ReleaseFast -Dtarget=aarch64-macos.11.0...13.6.3-none -p vosk/aarch64-macos shared
+zig build -Doptimize=ReleaseFast -Dtarget=x86_64-native -p vosk/x86_64-macos
+zig build -Doptimize=ReleaseFast -Dtarget=aarch64-native -p vosk/aarch64-macos
 ```
 
-Result:
+Result (on MacOS):
 ```sh
 % tree vosk
 vosk
@@ -27,35 +25,14 @@ vosk
 │   ├── include
 │   │   └── vosk_api.h
 │   └── lib
+│       ├── libvosk.a
 │       └── libvosk.dylib
 └── x86_64-macos
     ├── include
     │   └── vosk_api.h
     └── lib
+        ├── libvosk.a
         └── libvosk.dylib
-```
-
-To build static libraries for x86/arm64:
-
-```sh
-zig build -Doptimize=ReleaseFast -Dtarget=x86_64-macos.10.13...13.6.3-none -p vosk/x86_64-macos static
-zig build -Doptimize=ReleaseFast -Dtarget=aarch64-macos.11.0...13.6.3-none -p vosk/aarch64-macos static
-```
-
-Result:
-```sh
-% tree vosk
-vosk
-├── aarch64-macos
-│   ├── include
-│   │   └── vosk_api.h
-│   └── lib
-│       └── libvosk.a
-└── x86_64-macos
-    ├── include
-    │   └── vosk_api.h
-    └── lib
-│       └── libvosk.a
 ```
 
 ## Examples
@@ -70,17 +47,18 @@ zig build -Doptimize=ReleaseFast example-zig
 
 ### C/C++
 
-To use the static library:
-
-```sh
-zig cc -I vosk/x86_64-macos/include src/example.c vosk/x86_64-macos/lib/libvosk.a -framework Accelerate -lc++
-./a.out path/to/model path/to/wav
-```
-
 To use the dynamic library:
 
 ```sh
-zig cc -Ivosk/x86_64-macos/include -Lvosk/x86_64-macos/lib src/example.c -lvosk -Wl,-rpath,vosk/x86_64-macos/lib
+zig cc -Ivosk/aarch64-macos/include -Lvosk/aarch64-macos/lib src/example.c -lvosk -Wl,-rpath,vosk/aarch64-macos/lib
+./a.out path/to/model path/to/wav
+```
+
+To use the static library:
+
+```sh
+# TODO: this errors on MacOS...
+zig cc -I vosk/aarch64-macos/include src/example.c vosk/aarch64-macos/lib/libvosk.a -framework Accelerate -lc++
 ./a.out path/to/model path/to/wav
 ```
 
