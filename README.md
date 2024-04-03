@@ -3,14 +3,14 @@
 
 # vosk.zig
 
-Building [vosk-api](https://github.com/alphacep/vosk-api) using [zig](https://ziglang.org).
+Build [vosk-api](https://github.com/alphacep/vosk-api) using [zig](https://ziglang.org).
 
 ## Status
 
 - MacOS (using `linkFramework("Accelerate")`)
 - Linux (using `linkSystemLibrary("openblas")`)
 
-## Building
+## Build
 
 ```sh
 zig build -Doptimize=ReleaseFast -Dtarget=x86_64-native -p vosk/x86_64-macos
@@ -68,4 +68,4 @@ See the `example-zig` step in `build.zig`.
 
 ## License
 
-[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html), same as [Vosk](https://github.com/alphacep/vosk-api).
+[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html), same as [vosk-api](https://github.com/alphacep/vosk-api).
