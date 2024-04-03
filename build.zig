@@ -867,7 +867,7 @@ pub fn build(b: *std.Build) void {
         module.linkLibrary(static_lib);
     }
 
-    //--------------------------------
+    //--
 
     const example_static = b.addExecutable(.{
         .name = "example-static",
@@ -898,29 +898,6 @@ pub fn build(b: *std.Build) void {
         }
     }
 
-    //--
-
-    const example_zig = b.addExecutable(.{
-        .name = "example-zig",
-        .target = target,
-        .optimize = optimize,
-        .root_source_file = .{ .path = "src/example.zig" },
-    });
-    {
-        const exe = example_zig;
-
-        exe.root_module.addImport("vosk", module);
-
-        const run = b.addRunArtifact(exe);
-        run.addFileArg(model_dep.path(""));
-        run.addFileArg(vosk_dep.path("python/example/test.wav"));
-
-        const step = b.step("example-zig", "Run the zig example");
-        step.dependOn(&run.step);
-    }
-
-    //--
-
     const example_shared = b.addExecutable(.{
         .name = "example-shared",
         .target = target,
@@ -949,6 +926,25 @@ pub fn build(b: *std.Build) void {
             exe.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
             exe.linkFramework("Accelerate");
         }
+    }
+
+    const example_zig = b.addExecutable(.{
+        .name = "example-zig",
+        .target = target,
+        .optimize = optimize,
+        .root_source_file = .{ .path = "src/example.zig" },
+    });
+    {
+        const exe = example_zig;
+
+        exe.root_module.addImport("vosk", module);
+
+        const run = b.addRunArtifact(exe);
+        run.addFileArg(model_dep.path(""));
+        run.addFileArg(vosk_dep.path("python/example/test.wav"));
+
+        const step = b.step("example-zig", "Run the zig example");
+        step.dependOn(&run.step);
     }
 }
 
