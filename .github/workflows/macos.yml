@@ -45,9 +45,12 @@ jobs:
         run: |
           zig version
 
-      - name: build
+      - name: build x86_64
         run: |
           zig build --summary all --verbose -Doptimize=ReleaseFast -Dtarget=x86_64-native -p vosk/x86_64-macos
+
+      - name: build aarch64
+        run: |
           zig build --summary all --verbose -Doptimize=ReleaseFast -Dtarget=aarch64-native -p vosk/aarch64-macos
 
       - uses: actions/upload-artifact@v3
