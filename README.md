@@ -69,5 +69,3 @@ See the `example-zig` step in `build.zig`.
 ## License
 
 [Apache-2.0](https://spdx.org/licenses/Apache-2.0.html), same as [Vosk](https://github.com/alphacep/vosk-api).
-
-See the [SPDX identifiers](https://spdx.dev/) on each source code file.
