@@ -822,9 +822,10 @@ pub fn build(b: *std.Build) void {
                 "vosk_api.h",
             );
 
-            if (lib.linkage == .static) lib.pie = true;
-
-            b.installArtifact(lib);
+            if (lib.linkage == .static)
+                lib.pie = true
+            else
+                b.installArtifact(lib);
         }
     }
 

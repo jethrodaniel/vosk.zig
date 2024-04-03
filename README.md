@@ -25,13 +25,11 @@ vosk
 │   ├── include
 │   │   └── vosk_api.h
 │   └── lib
-│       ├── libvosk.a
 │       └── libvosk.dylib
 └── x86_64-macos
     ├── include
     │   └── vosk_api.h
     └── lib
-        ├── libvosk.a
         └── libvosk.dylib
 ```
 
@@ -47,30 +45,19 @@ zig build -Doptimize=ReleaseFast example-zig
 
 ### C/C++
 
-To use the dynamic library:
-
 ```sh
 zig cc -Ivosk/aarch64-macos/include -Lvosk/aarch64-macos/lib src/example.c -lvosk -Wl,-rpath,vosk/aarch64-macos/lib
 ./a.out path/to/model path/to/wav
 ```
 
-To use the static library:
-
-```sh
-# TODO: this errors on MacOS...
-zig cc -I vosk/aarch64-macos/include src/example.c vosk/aarch64-macos/lib/libvosk.a -framework Accelerate -lc++
-./a.out path/to/model path/to/wav
-```
-
 ### FFI
 
-To use the dynamic library, move it somewhere your system can find it, e.g:
-
 ```sh
-cp -v vosk/x86_64-macos/lib/libvosk.a /usr/local/lib/
-
 git clone -b ruby https://github.com/jethrodaniel/vosk-api
 cd vosk-api/ruby
+
+cp -v path/to/libvosk.dylib .
+
 bundle
 bundle exec ruby examples/transcribe.rb
 ```
