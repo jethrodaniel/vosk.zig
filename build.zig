@@ -151,7 +151,6 @@ pub fn build(b: *std.Build) void {
 
             // sudo apt-get install -y libopenblas-dev
             lib.linkSystemLibrary("openblas");
-            lib.addLibraryPath(.{ .path = "/usr/lib/x86_64-linux-gnu" });
         }
     }
 
@@ -799,8 +798,6 @@ pub fn build(b: *std.Build) void {
             //
             // TODO: use OpenBLAS instead to avoid this (requires Kaldi changes).
             lib.linkFramework("Accelerate");
-        } else if (target.result.os.tag == .linux) {
-            lib.addLibraryPath(.{ .path = "/usr/lib/x86_64-linux-gnu" });
         }
 
         lib.pie = true;
@@ -809,13 +806,13 @@ pub fn build(b: *std.Build) void {
     //----
 
     const static_lib = b.addStaticLibrary(.{
-        .name = "vosk-static",
+        .name = "vosk",
         .target = target,
         .optimize = optimize,
         .strip = true,
     });
     const shared_lib = b.addSharedLibrary(.{
-        .name = "vosk-shared",
+        .name = "vosk",
         .target = target,
         .optimize = optimize,
         .strip = true,
@@ -860,8 +857,6 @@ pub fn build(b: *std.Build) void {
                 lib.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
 
                 lib.linkFramework("Accelerate");
-            } else if (target.result.os.tag == .linux) {
-                lib.addLibraryPath(.{ .path = "/usr/lib/x86_64-linux-gnu" });
             }
 
             if (lib.linkage == .static) {
@@ -870,95 +865,6 @@ pub fn build(b: *std.Build) void {
 
             b.installArtifact(lib);
         }
-    }
-
-    //--
-
-    const final_static_lib = ArchiveStep.create(b, .{
-        .out_name = b.fmt("libvosk{s}", .{target.result.staticLibSuffix()}),
-        .inputs = &.{
-            fst.getEmittedBin(),
-            fstngram.getEmittedBin(),
-
-            kaldi_base.getEmittedBin(),
-            kaldi_matrix.getEmittedBin(),
-            kaldi_util.getEmittedBin(),
-            kaldi_tree.getEmittedBin(),
-            kaldi_gmm.getEmittedBin(),
-            kaldi_transform.getEmittedBin(),
-            kaldi_ivector.getEmittedBin(),
-            kaldi_cudamatrix.getEmittedBin(),
-            kaldi_hmm.getEmittedBin(),
-            kaldi_lat.getEmittedBin(),
-            kaldi_fstext.getEmittedBin(),
-            kaldi_chain.getEmittedBin(),
-            kaldi_decoder.getEmittedBin(),
-            kaldi_nnet3.getEmittedBin(),
-            kaldi_feat.getEmittedBin(),
-            kaldi_lm.getEmittedBin(),
-            kaldi_rnnlm.getEmittedBin(),
-            kaldi_nnet2.getEmittedBin(),
-            kaldi_online2.getEmittedBin(),
-            kaldi.getEmittedBin(),
-
-            static_lib.getEmittedBin(),
-        },
-    });
-    {
-        const installFinalStep = b.addInstallLibFile(
-            final_static_lib.output,
-            final_static_lib.opts.out_name,
-        );
-
-        const step = b.step("static", "Build static lib");
-        step.dependOn(&installFinalStep.step);
-    }
-
-    //--
-
-    var additional_args = std.ArrayList([]const u8).init(b.allocator);
-    {
-        additional_args.append("-lc++") catch @panic("appendSlice");
-        additional_args.append("-Wl,-s") catch @panic("appendSlice");
-
-        if (target.result.os.tag == .macos) {
-            const sdk = std.zig.system.darwin.getSdk(b.allocator, b.host.result) orelse
-                @panic("macOS SDK is missing");
-
-            additional_args.appendSlice(&.{
-                "-F",
-                b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }),
-                "-framework",
-                "Accelerate",
-            }) catch @panic("appendSlice");
-        } else if (target.result.os.tag == .linux) {
-            additional_args.appendSlice(&.{
-                "-lopenblas",
-                b.fmt("-L{s}", .{"/usr/lib/x86_64-linux-gnu"}),
-            }) catch @panic("appendSlice");
-        }
-    }
-
-    const final_shared_lib = DynamicArchiveStep.create(b, .{
-        .out_name = b.fmt("libvosk{s}", .{target.result.dynamicLibSuffix()}),
-        .target = target,
-        .input = final_static_lib.output,
-        .additional_args = additional_args.items,
-    });
-    const build_final_shared_lib_step = b.step("shared", "Build shared lib");
-    {
-        const installLib = b.addInstallLibFile(
-            final_shared_lib.output,
-            final_shared_lib.opts.out_name,
-        );
-        const installHeader = b.addInstallHeaderFile(
-            vosk_dep.path("src/vosk_api.h").getPath(b),
-            "vosk_api.h",
-        );
-
-        const step = build_final_shared_lib_step;
-        step.dependOn(&installLib.step);
-        step.dependOn(&installHeader.step);
     }
 
     const module = b.addModule("vosk", .{
@@ -981,10 +887,7 @@ pub fn build(b: *std.Build) void {
 
         exe.addCSourceFile(.{ .file = .{ .path = "src/example.c" }, .flags = &.{} });
 
-        // exe.linkLibrary(static_lib);
-        exe.addObjectFile(final_static_lib.output);
-        exe.addIncludePath(vosk_dep.path("src"));
-        exe.linkLibCpp();
+        exe.linkLibrary(static_lib);
 
         const run = b.addRunArtifact(exe);
         run.addFileArg(model_dep.path(""));
@@ -1000,9 +903,6 @@ pub fn build(b: *std.Build) void {
             exe.addSystemFrameworkPath(.{ .path = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
             exe.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
             exe.linkFramework("Accelerate");
-        } else if (target.result.os.tag == .linux) {
-            exe.linkSystemLibrary("openblas");
-            exe.addLibraryPath(.{ .path = "/usr/lib/x86_64-linux-gnu" });
         }
     }
 
@@ -1037,17 +937,10 @@ pub fn build(b: *std.Build) void {
     });
     {
         const exe = example_shared;
+
         exe.addCSourceFile(.{ .file = .{ .path = "src/example.c" }, .flags = &.{} });
 
-        // exe.linkLibrary(shared_lib);
-
-        exe.linkSystemLibrary("vosk");
-        exe.step.dependOn(build_final_shared_lib_step);
-        exe.addLibraryPath(.{ .path = b.getInstallPath(.lib, "") });
-        exe.addRPath(.{ .path = b.getInstallPath(.lib, "") });
-
-        exe.addIncludePath(vosk_dep.path("src"));
-        exe.linkLibCpp();
+        exe.linkLibrary(shared_lib);
 
         const run = b.addRunArtifact(exe);
         run.addFileArg(model_dep.path(""));
@@ -1063,115 +956,9 @@ pub fn build(b: *std.Build) void {
             exe.addSystemFrameworkPath(.{ .path = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
             exe.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
             exe.linkFramework("Accelerate");
-        } else if (target.result.os.tag == .linux) {
-            exe.addLibraryPath(.{ .path = "/usr/lib/x86_64-linux-gnu" });
         }
     }
 }
-
-// Combine static archives into a single static archive, e.g:
-//
-//   zig ar q libfull.a -c -L liba.a -L libb.a ...
-//
-const ArchiveStep = struct {
-    step: *std.Build.Step,
-    output: std.Build.LazyPath,
-    opts: Options,
-
-    const Options = struct {
-        out_name: []const u8,
-        inputs: []const std.Build.LazyPath,
-    };
-
-    fn create(b: *std.Build, opts: Options) *ArchiveStep {
-        const self = b.allocator.create(ArchiveStep) catch @panic("OOM");
-
-        const run_step = std.Build.Step.Run.create(b, b.fmt(
-            "create-static-archive-{s}",
-            .{opts.out_name},
-        ));
-        run_step.addArgs(&.{ b.graph.zig_exe, "ar", "q" });
-        const output = run_step.addOutputFileArg(opts.out_name);
-        run_step.addArgs(&.{"-c"});
-        for (opts.inputs) |input_lib| {
-            run_step.addArgs(&.{"-L"});
-            run_step.addFileArg(input_lib);
-        }
-
-        self.* = .{
-            .step = &run_step.step,
-            .output = output,
-            .opts = opts,
-        };
-
-        return self;
-    }
-};
-
-// Convert static archive into a dynamic archive, e.g:
-//
-//   zig cc -shared \
-//     -Wl,--whole-archive libstatic.a -Wl,--no-whole-archive \
-//     -o libshared.dylib \
-//     -install_name @rpath/libshared.dylib \
-//     ...
-//
-const DynamicArchiveStep = struct {
-    step: *std.Build.Step,
-    output: std.Build.LazyPath,
-    opts: Options,
-
-    const Options = struct {
-        out_name: []const u8,
-        input: std.Build.LazyPath,
-        additional_args: []const []const u8,
-        target: std.Build.ResolvedTarget,
-    };
-
-    fn create(b: *std.Build, opts: Options) *DynamicArchiveStep {
-        const self = b.allocator.create(DynamicArchiveStep) catch @panic("OOM");
-        const triple = opts.target.result.zigTriple(b.allocator) catch @panic("OOM, zigTriple");
-
-        const run_step = std.Build.Step.Run.create(b, b.fmt(
-            "create-dynamic-archive-{s}",
-            .{opts.out_name},
-        ));
-
-        // NOTE: this reduces binary size from 23M to 14M by linking against
-        // c++, instead of including it.
-        //
-        //   clang -shared -all_load zig-out/lib/libvosk.a -framework Accelerate -lc++ -o libvosk.dylib
-        //
-        // TODO: get zig to do this as well.
-        run_step.addArgs(&.{
-            b.graph.zig_exe,
-            "cc",
-            "-target",
-            triple,
-            "-shared",
-            "-Wl,--whole-archive",
-        });
-        run_step.addFileArg(opts.input);
-        run_step.addArgs(&.{
-            "-Wl,--no-whole-archive",
-            "-o",
-        });
-        const output = run_step.addOutputFileArg(opts.out_name);
-        run_step.addArgs(&.{
-            "-install_name",
-            b.fmt("@rpath/{s}", .{opts.out_name}),
-        });
-        run_step.addArgs(opts.additional_args);
-
-        self.* = .{
-            .step = &run_step.step,
-            .output = output,
-            .opts = opts,
-        };
-
-        return self;
-    }
-};
 
 fn kaldiLibrary(
     lib: *std.Build.Step.Compile,
