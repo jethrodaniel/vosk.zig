@@ -773,25 +773,6 @@ pub fn build(b: *std.Build) void {
         lib.linkLibrary(kaldi_rnnlm);
         lib.linkLibrary(kaldi_online2);
 
-        // NOTE: needed for `kaldi-matrix`
-        if (target.result.os.tag == .macos) {
-            const sdk = std.zig.system.darwin.getSdk(b.allocator, b.host.result) orelse
-                @panic("macOS SDK is missing");
-            lib.addSystemIncludePath(.{ .path = b.pathJoin(&.{ sdk, "/usr/include" }) });
-            lib.addSystemFrameworkPath(.{ .path = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
-            lib.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
-
-            // NOTE: Using Xcode's `Accelerate` framework means that we have to
-            //   comply with Apple's Xcode license:
-            //
-            //   https://www.apple.com/legal/sla/docs/xcode.pdf
-            //
-            // See https://github.com/hexops/xcode-frameworks/blob/main/LICENSE
-            //
-            // TODO: use OpenBLAS instead to avoid this (requires Kaldi changes).
-            lib.linkFramework("Accelerate");
-        }
-
         lib.pie = true;
     }
 
@@ -841,20 +822,7 @@ pub fn build(b: *std.Build) void {
                 "vosk_api.h",
             );
 
-            // TODO: why isn't `linkLibrary(kaldi)` enough?
-            if (target.result.os.tag == .macos) {
-                const sdk = std.zig.system.darwin.getSdk(b.allocator, b.host.result) orelse
-                    @panic("macOS SDK is missing");
-                lib.addSystemIncludePath(.{ .path = b.pathJoin(&.{ sdk, "/usr/include" }) });
-                lib.addSystemFrameworkPath(.{ .path = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
-                lib.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
-
-                lib.linkFramework("Accelerate");
-            }
-
-            if (lib.linkage == .static) {
-                lib.pie = true;
-            }
+            if (lib.linkage == .static) lib.pie = true;
 
             b.installArtifact(lib);
         }
@@ -888,15 +856,6 @@ pub fn build(b: *std.Build) void {
 
         const step = b.step("example-static", "Run the static library example");
         step.dependOn(&run.step);
-
-        if (target.result.os.tag == .macos) {
-            const sdk = std.zig.system.darwin.getSdk(b.allocator, b.host.result) orelse
-                @panic("macOS SDK is missing");
-            exe.addSystemIncludePath(.{ .path = b.pathJoin(&.{ sdk, "/usr/include" }) });
-            exe.addSystemFrameworkPath(.{ .path = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
-            exe.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
-            exe.linkFramework("Accelerate");
-        }
     }
 
     const example_shared = b.addExecutable(.{
@@ -917,15 +876,6 @@ pub fn build(b: *std.Build) void {
 
         const step = b.step("example-shared", "Run the shared-library example");
         step.dependOn(&run.step);
-
-        if (target.result.os.tag == .macos) {
-            const sdk = std.zig.system.darwin.getSdk(b.allocator, b.host.result) orelse
-                @panic("macOS SDK is missing");
-            exe.addSystemIncludePath(.{ .path = b.pathJoin(&.{ sdk, "/usr/include" }) });
-            exe.addSystemFrameworkPath(.{ .path = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
-            exe.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
-            exe.linkFramework("Accelerate");
-        }
     }
 
     const example_zig = b.addExecutable(.{
