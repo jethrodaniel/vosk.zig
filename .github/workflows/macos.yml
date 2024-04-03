@@ -26,7 +26,7 @@ jobs:
 
       - name: check for cached zig
         id: cache-zig
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ env.ZIG }}
           key: ${{ env.ZIG }}
@@ -53,7 +53,7 @@ jobs:
         run: |
           zig build --summary all --verbose -Doptimize=ReleaseFast -Dtarget=aarch64-native -p vosk/aarch64-macos
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: vosk
           path: |
