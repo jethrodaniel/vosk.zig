@@ -176,8 +176,9 @@ pub fn build(b: *std.Build) void {
             "src/util/text-utils.cc",
         };
         kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
-        // kaldi_util.linkLibrary(kaldi_matrix);
-        // kaldi_util.linkLibrary(kaldi_base);
+
+        kaldi_util.linkLibrary(kaldi_matrix);
+        kaldi_util.linkLibrary(kaldi_base);
     }
 
     //
@@ -202,9 +203,10 @@ pub fn build(b: *std.Build) void {
             "src/tree/tree-renderer.cc",
         };
         kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
-        // lib.linkLibrary(kaldi_util);
-        // lib.linkLibrary(kaldi_matrix);
-        // lib.linkLibrary(kaldi_base);
+
+        lib.linkLibrary(kaldi_util);
+        lib.linkLibrary(kaldi_matrix);
+        lib.linkLibrary(kaldi_base);
     }
 
     //
@@ -232,10 +234,11 @@ pub fn build(b: *std.Build) void {
             "src/gmm/model-common.cc",
         };
         kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
-        // lib.linkLibrary(kaldi_tree);
-        // lib.linkLibrary(kaldi_util);
-        // lib.linkLibrary(kaldi_matrix);
-        // lib.linkLibrary(kaldi_base);
+
+        lib.linkLibrary(kaldi_tree);
+        lib.linkLibrary(kaldi_util);
+        lib.linkLibrary(kaldi_matrix);
+        lib.linkLibrary(kaldi_base);
     }
 
     //
@@ -267,11 +270,12 @@ pub fn build(b: *std.Build) void {
             "src/transform/transform-common.cc",
         };
         kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
-        // lib.linkLibrary(kaldi_gmm);
-        // lib.linkLibrary(kaldi_tree);
-        // lib.linkLibrary(kaldi_util);
-        // lib.linkLibrary(kaldi_matrix);
-        // lib.linkLibrary(kaldi_base);
+
+        lib.linkLibrary(kaldi_gmm);
+        lib.linkLibrary(kaldi_tree);
+        lib.linkLibrary(kaldi_util);
+        lib.linkLibrary(kaldi_matrix);
+        lib.linkLibrary(kaldi_base);
     }
 
     //
@@ -293,12 +297,13 @@ pub fn build(b: *std.Build) void {
             "src/ivector/voice-activity-detection.cc",
         };
         kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
-        // lib.linkLibrary(kaldi_transform);
-        // lib.linkLibrary(kaldi_gmm);
-        // lib.linkLibrary(kaldi_tree);
-        // lib.linkLibrary(kaldi_util);
-        // lib.linkLibrary(kaldi_matrix);
-        // lib.linkLibrary(kaldi_base);
+
+        lib.linkLibrary(kaldi_transform);
+        lib.linkLibrary(kaldi_gmm);
+        lib.linkLibrary(kaldi_tree);
+        lib.linkLibrary(kaldi_util);
+        lib.linkLibrary(kaldi_matrix);
+        lib.linkLibrary(kaldi_base);
     }
 
     //
@@ -328,9 +333,10 @@ pub fn build(b: *std.Build) void {
             "src/cudamatrix/cu-vector.cc",
         };
         kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
-        // lib.linkLibrary(kaldi_util);
-        // lib.linkLibrary(kaldi_matrix);
-        // lib.linkLibrary(kaldi_base);
+
+        lib.linkLibrary(kaldi_util);
+        lib.linkLibrary(kaldi_matrix);
+        lib.linkLibrary(kaldi_base);
 
         lib.defineCMacro("HAVE_CUDA", "0");
         lib.defineCMacro("NDEBUG", "1");
@@ -354,10 +360,11 @@ pub fn build(b: *std.Build) void {
             "src/hmm/tree-accu.cc",
         };
         kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
-        // lib.linkLibrary(kaldi_tree);
-        // lib.linkLibrary(kaldi_util);
-        // lib.linkLibrary(kaldi_matrix);
-        // lib.linkLibrary(kaldi_base);
+
+        lib.linkLibrary(kaldi_tree);
+        lib.linkLibrary(kaldi_util);
+        lib.linkLibrary(kaldi_matrix);
+        lib.linkLibrary(kaldi_base);
     }
 
     //
@@ -385,11 +392,12 @@ pub fn build(b: *std.Build) void {
             "src/lat/word-align-lattice.cc",
         };
         kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
-        // lib.linkLibrary(kaldi_hmm);
-        // lib.linkLibrary(kaldi_tree);
-        // lib.linkLibrary(kaldi_util);
-        // lib.linkLibrary(kaldi_matrix);
-        // lib.linkLibrary(kaldi_base);
+
+        lib.linkLibrary(kaldi_hmm);
+        lib.linkLibrary(kaldi_tree);
+        lib.linkLibrary(kaldi_util);
+        lib.linkLibrary(kaldi_matrix);
+        lib.linkLibrary(kaldi_base);
     }
 
     //
@@ -432,14 +440,15 @@ pub fn build(b: *std.Build) void {
         };
         kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
         lib.defineCMacro("HAVE_CUDA", "0");
-        // lib.linkLibrary(kaldi_cudamatrix);
-        // lib.linkLibrary(kaldi_lat);
-        // lib.linkLibrary(kaldi_fstext);
-        // lib.linkLibrary(kaldi_hmm);
-        // lib.linkLibrary(kaldi_tree);
-        // lib.linkLibrary(kaldi_util);
-        // lib.linkLibrary(kaldi_matrix);
-        // lib.linkLibrary(kaldi_base);
+
+        lib.linkLibrary(kaldi_cudamatrix);
+        lib.linkLibrary(kaldi_lat);
+        lib.linkLibrary(kaldi_fstext);
+        lib.linkLibrary(kaldi_hmm);
+        lib.linkLibrary(kaldi_tree);
+        lib.linkLibrary(kaldi_util);
+        lib.linkLibrary(kaldi_matrix);
+        lib.linkLibrary(kaldi_base);
     }
 
     //
@@ -466,15 +475,16 @@ pub fn build(b: *std.Build) void {
             "src/decoder/training-graph-compiler.cc",
         };
         kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
-        // lib.linkLibrary(kaldi_lat);
-        // lib.linkLibrary(kaldi_fstext);
-        // lib.linkLibrary(kaldi_hmm);
-        // lib.linkLibrary(kaldi_transform);
-        // lib.linkLibrary(kaldi_gmm);
-        // lib.linkLibrary(kaldi_tree);
-        // lib.linkLibrary(kaldi_util);
-        // lib.linkLibrary(kaldi_matrix);
-        // lib.linkLibrary(kaldi_base);
+
+        lib.linkLibrary(kaldi_lat);
+        lib.linkLibrary(kaldi_fstext);
+        lib.linkLibrary(kaldi_hmm);
+        lib.linkLibrary(kaldi_transform);
+        lib.linkLibrary(kaldi_gmm);
+        lib.linkLibrary(kaldi_tree);
+        lib.linkLibrary(kaldi_util);
+        lib.linkLibrary(kaldi_matrix);
+        lib.linkLibrary(kaldi_base);
     }
 
     //
@@ -537,18 +547,19 @@ pub fn build(b: *std.Build) void {
         };
         kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
         lib.defineCMacro("HAVE_CUDA", "0");
-        // lib.linkLibrary(kaldi_chain);
-        // lib.linkLibrary(kaldi_cudamatrix);
-        // lib.linkLibrary(kaldi_decoder);
-        // lib.linkLibrary(kaldi_lat);
-        // lib.linkLibrary(kaldi_fstext);
-        // lib.linkLibrary(kaldi_hmm);
-        // lib.linkLibrary(kaldi_transform);
-        // lib.linkLibrary(kaldi_gmm);
-        // lib.linkLibrary(kaldi_tree);
-        // lib.linkLibrary(kaldi_util);
-        // lib.linkLibrary(kaldi_matrix);
-        // lib.linkLibrary(kaldi_base);
+
+        lib.linkLibrary(kaldi_chain);
+        lib.linkLibrary(kaldi_cudamatrix);
+        lib.linkLibrary(kaldi_decoder);
+        lib.linkLibrary(kaldi_lat);
+        lib.linkLibrary(kaldi_fstext);
+        lib.linkLibrary(kaldi_hmm);
+        lib.linkLibrary(kaldi_transform);
+        lib.linkLibrary(kaldi_gmm);
+        lib.linkLibrary(kaldi_tree);
+        lib.linkLibrary(kaldi_util);
+        lib.linkLibrary(kaldi_matrix);
+        lib.linkLibrary(kaldi_base);
     }
 
     //
@@ -576,12 +587,13 @@ pub fn build(b: *std.Build) void {
             "src/feat/wave-reader.cc",
         };
         kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
-        // lib.linkLibrary(kaldi_transform);
-        // lib.linkLibrary(kaldi_gmm);
-        // lib.linkLibrary(kaldi_tree);
-        // lib.linkLibrary(kaldi_util);
-        // lib.linkLibrary(kaldi_matrix);
-        // lib.linkLibrary(kaldi_base);
+
+        lib.linkLibrary(kaldi_transform);
+        lib.linkLibrary(kaldi_gmm);
+        lib.linkLibrary(kaldi_tree);
+        lib.linkLibrary(kaldi_util);
+        lib.linkLibrary(kaldi_matrix);
+        lib.linkLibrary(kaldi_base);
     }
 
     //
@@ -603,10 +615,11 @@ pub fn build(b: *std.Build) void {
             "src/lm/mikolov-rnnlm-lib.cc",
         };
         kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
-        // lib.linkLibrary(kaldi_fstext);
-        // lib.linkLibrary(kaldi_util);
-        // lib.linkLibrary(kaldi_matrix);
-        // lib.linkLibrary(kaldi_base);
+
+        lib.linkLibrary(kaldi_fstext);
+        lib.linkLibrary(kaldi_util);
+        lib.linkLibrary(kaldi_matrix);
+        lib.linkLibrary(kaldi_base);
     }
 
     //
@@ -635,13 +648,14 @@ pub fn build(b: *std.Build) void {
         };
         kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
         lib.linkLibCpp();
-        // lib.linkLibrary(kaldi_nnet3);
-        // lib.linkLibrary(kaldi_cudamatrix);
-        // lib.linkLibrary(kaldi_lm);
-        // lib.linkLibrary(kaldi_hmm);
-        // lib.linkLibrary(kaldi_util);
-        // lib.linkLibrary(kaldi_matrix);
-        // lib.linkLibrary(kaldi_base);
+
+        lib.linkLibrary(kaldi_nnet3);
+        lib.linkLibrary(kaldi_cudamatrix);
+        lib.linkLibrary(kaldi_lm);
+        lib.linkLibrary(kaldi_hmm);
+        lib.linkLibrary(kaldi_util);
+        lib.linkLibrary(kaldi_matrix);
+        lib.linkLibrary(kaldi_base);
     }
 
     //
@@ -684,15 +698,16 @@ pub fn build(b: *std.Build) void {
         };
         kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
         lib.defineCMacro("HAVE_CUDA", "0");
-        // lib.linkLibrary(kaldi_cudamatrix);
-        // lib.linkLibrary(kaldi_lat);
-        // lib.linkLibrary(kaldi_hmm);
-        // lib.linkLibrary(kaldi_transform);
-        // lib.linkLibrary(kaldi_gmm);
-        // lib.linkLibrary(kaldi_tree);
-        // lib.linkLibrary(kaldi_util);
-        // lib.linkLibrary(kaldi_matrix);
-        // lib.linkLibrary(kaldi_base);
+
+        lib.linkLibrary(kaldi_cudamatrix);
+        lib.linkLibrary(kaldi_lat);
+        lib.linkLibrary(kaldi_hmm);
+        lib.linkLibrary(kaldi_transform);
+        lib.linkLibrary(kaldi_gmm);
+        lib.linkLibrary(kaldi_tree);
+        lib.linkLibrary(kaldi_util);
+        lib.linkLibrary(kaldi_matrix);
+        lib.linkLibrary(kaldi_base);
     }
 
     //
@@ -722,21 +737,22 @@ pub fn build(b: *std.Build) void {
             "src/online2/onlinebin-util.cc",
         };
         kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
-        // lib.linkLibrary(kaldi_ivector);
-        // lib.linkLibrary(kaldi_nnet3);
-        // lib.linkLibrary(kaldi_chain);
-        // lib.linkLibrary(kaldi_nnet2);
-        // lib.linkLibrary(kaldi_cudamatrix);
-        // lib.linkLibrary(kaldi_decoder);
-        // lib.linkLibrary(kaldi_lat);
-        // lib.linkLibrary(kaldi_hmm);
-        // lib.linkLibrary(kaldi_feat);
-        // lib.linkLibrary(kaldi_transform);
-        // lib.linkLibrary(kaldi_gmm);
-        // lib.linkLibrary(kaldi_tree);
-        // lib.linkLibrary(kaldi_util);
-        // lib.linkLibrary(kaldi_matrix);
-        // lib.linkLibrary(kaldi_base);
+
+        lib.linkLibrary(kaldi_ivector);
+        lib.linkLibrary(kaldi_nnet3);
+        lib.linkLibrary(kaldi_chain);
+        lib.linkLibrary(kaldi_nnet2);
+        lib.linkLibrary(kaldi_cudamatrix);
+        lib.linkLibrary(kaldi_decoder);
+        lib.linkLibrary(kaldi_lat);
+        lib.linkLibrary(kaldi_hmm);
+        lib.linkLibrary(kaldi_feat);
+        lib.linkLibrary(kaldi_transform);
+        lib.linkLibrary(kaldi_gmm);
+        lib.linkLibrary(kaldi_tree);
+        lib.linkLibrary(kaldi_util);
+        lib.linkLibrary(kaldi_matrix);
+        lib.linkLibrary(kaldi_base);
     }
 
     //
@@ -753,32 +769,8 @@ pub fn build(b: *std.Build) void {
 
         lib.linkLibCpp();
 
-        // TODO: only ones we need..
-        // lib.linkLibrary(kaldi_online2);
-        // lib.linkLibrary(kaldi_lm);
-        // lib.linkLibrary(kaldi_rnnlm);
-
-        lib.linkLibrary(fst);
-        lib.linkLibrary(fstngram);
-
-        lib.linkLibrary(kaldi_base);
-        lib.linkLibrary(kaldi_matrix);
-        lib.linkLibrary(kaldi_util);
-        lib.linkLibrary(kaldi_tree);
-        lib.linkLibrary(kaldi_gmm);
-        lib.linkLibrary(kaldi_transform);
-        lib.linkLibrary(kaldi_ivector);
-        lib.linkLibrary(kaldi_cudamatrix);
-        lib.linkLibrary(kaldi_hmm);
-        lib.linkLibrary(kaldi_lat);
-        lib.linkLibrary(kaldi_fstext);
-        lib.linkLibrary(kaldi_chain);
-        lib.linkLibrary(kaldi_decoder);
-        lib.linkLibrary(kaldi_nnet3);
-        lib.linkLibrary(kaldi_feat);
-        lib.linkLibrary(kaldi_lm);
+        // NOTE: vosk only needs -lrnnlm -lonline2
         lib.linkLibrary(kaldi_rnnlm);
-        lib.linkLibrary(kaldi_nnet2);
         lib.linkLibrary(kaldi_online2);
 
         // NOTE: needed for `kaldi-matrix`
