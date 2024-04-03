@@ -7,7 +7,7 @@ Building [vosk-api](https://github.com/alphacep/vosk-api) using [zig](https://zi
 
 ## Status
 
-- MacOS (using `-framework Accelerate`)
+- MacOS (using `linkFramework("Accelerate")`)
 - Linux (using `linkSystemLibrary("openblas")`)
 
 ## Building
