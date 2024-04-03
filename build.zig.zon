@@ -14,20 +14,21 @@
             .url = "git+https://github.com/alphacep/vosk-api#40937b6bcbe318eeb01879093c59cf5a1219a29d",
             .hash = "1220e70df41f7c45ac2d71fdb526b2d08e6834b6c9476039e0a64038be1642de1ec3",
         },
-        // fork of alphacep/openfst#master with NDEBUG fixes
+        // Fork of alphacep/openfst#master with NDEBUG fixes
+        // https://github.com/alphacep/openfst/compare/master...jethrodaniel:openfst:fork
         .openfst = .{
             .url = "git+https://github.com/jethrodaniel/openfst#fork",
             .hash = "122074ff3bd9f9932a1043b0e6d9ed0ff5fa6644eeba999af6a28bf27a6e04354f6d",
         },
-        // fork of alphacep/kaldi#vosk with NDEBUG fixes
+        // Fork of alphacep/kaldi#vosk with NDEBUG fixes
+        // https://github.com/alphacep/kaldi/compare/vosk...jethrodaniel:kaldi:fork
         .kaldi = .{
             .url = "git+https://github.com/jethrodaniel/kaldi#fork",
             .hash = "12208056d84b2140f3ace6f937f3e0c6761125e4a92f9248c234524c6ecc0aee80ac",
         },
         .vosk_model_small_en_us_0_15 = .{
-            // TODO: fetch from https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip
-            //  once https://github.com/ziglang/zig/issues/17408 is resolved.
-            .url = "https://github.com/jethrodaniel/vosk-models/releases/download/vosk-model-small-en-us-0.15/vosk-model-small-en-us-0.15.tar.gz",
+            // TODO: https://github.com/ziglang/zig/issues/17408#issue-1929177657
+            .url = "https://gitlab.com/jethrodaniel/vosk-models/-/releases/2024-01-03/downloads/vosk-model-small-en-us-0.15.tgz",
             .hash = "1220e90dfb99e498e47515674d2934fcb6ce982598e0a76937573e69f2c009890342",
         },
     },
