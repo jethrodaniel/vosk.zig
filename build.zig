@@ -821,6 +821,7 @@ pub fn build(b: *std.Build) void {
                 .files = &.{
                     "src/language_model.cc",
                     "src/model.cc",
+                    "src/postprocessor.cc",
                     "src/recognizer.cc",
                     "src/spk_model.cc",
                     "src/vosk_api.cc",
@@ -901,8 +902,7 @@ pub fn build(b: *std.Build) void {
     const example_shared = b.addExecutable(.{
         .name = "example-shared",
         .target = target,
-        // TODO: this segfaults without this...
-        .optimize = .ReleaseFast,
+        .optimize = optimize,
     });
     {
         const exe = example_shared;
