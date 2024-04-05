@@ -124,7 +124,7 @@ pub fn build(b: *std.Build) void {
             "src/matrix/tp-matrix.cc",
         };
         kaldiLibrary(b, target, lib, kaldi_dep, fst_dep, srcs);
-        // lib.linkLibrary(kaldi_base);
+        lib.linkLibrary(kaldi_base);
 
         lib.defineCMacro("HAVE_CLAPACK", "1");
         // lib.defineCMacro("HAVE_OPENBLAS", "1");
