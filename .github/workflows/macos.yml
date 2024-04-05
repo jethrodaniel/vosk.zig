@@ -51,7 +51,7 @@ jobs:
 
       - name: build aarch64
         run: |
-          zig build -Dtarget=aarch64-macos.10.13...14.4.1-none -p vosk/aarch64-macos -Doptimize=ReleaseFast --summary all --verbose
+          zig build -Dtarget=aarch64-macos.11.0...14.4.1-none -p vosk/aarch64-macos -Doptimize=ReleaseFast --summary all --verbose
 
       - uses: actions/upload-artifact@v4
         with:
