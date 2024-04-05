@@ -94,7 +94,7 @@ pub fn build(b: *std.Build) void {
             "src/base/kaldi-utils.cc",
             "src/base/timer.cc",
         };
-        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        kaldiLibrary(b, target, lib, kaldi_dep, fst_dep, srcs);
 
         lib.defineCMacro("KALDI_VERSION", "\"5.5\""); // kaldi/src/.version
         lib.defineCMacro("NDEBUG", "1");
@@ -123,20 +123,13 @@ pub fn build(b: *std.Build) void {
             "src/matrix/srfft.cc",
             "src/matrix/tp-matrix.cc",
         };
-        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        kaldiLibrary(b, target, lib, kaldi_dep, fst_dep, srcs);
         // lib.linkLibrary(kaldi_base);
 
         lib.defineCMacro("HAVE_CLAPACK", "1");
         // lib.defineCMacro("HAVE_OPENBLAS", "1");
 
-        // NOTE: needed for `kaldi-matrix`
         if (target.result.os.tag == .macos) {
-            const sdk = std.zig.system.darwin.getSdk(b.allocator, b.host.result) orelse
-                @panic("macOS SDK is missing");
-            lib.addSystemIncludePath(.{ .path = b.pathJoin(&.{ sdk, "/usr/include" }) });
-            lib.addSystemFrameworkPath(.{ .path = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
-            lib.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
-
             // NOTE: Using Xcode's `Accelerate` framework means that we have to
             //   comply with Apple's Xcode license:
             //
@@ -175,7 +168,7 @@ pub fn build(b: *std.Build) void {
             "src/util/simple-options.cc",
             "src/util/text-utils.cc",
         };
-        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        kaldiLibrary(b, target, lib, kaldi_dep, fst_dep, srcs);
 
         kaldi_util.linkLibrary(kaldi_matrix);
         kaldi_util.linkLibrary(kaldi_base);
@@ -202,7 +195,7 @@ pub fn build(b: *std.Build) void {
             "src/tree/event-map.cc",
             "src/tree/tree-renderer.cc",
         };
-        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        kaldiLibrary(b, target, lib, kaldi_dep, fst_dep, srcs);
 
         lib.linkLibrary(kaldi_util);
         lib.linkLibrary(kaldi_matrix);
@@ -233,7 +226,7 @@ pub fn build(b: *std.Build) void {
             "src/gmm/mle-full-gmm.cc",
             "src/gmm/model-common.cc",
         };
-        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        kaldiLibrary(b, target, lib, kaldi_dep, fst_dep, srcs);
 
         lib.linkLibrary(kaldi_tree);
         lib.linkLibrary(kaldi_util);
@@ -269,7 +262,7 @@ pub fn build(b: *std.Build) void {
             "src/transform/regtree-mllr-diag-gmm.cc",
             "src/transform/transform-common.cc",
         };
-        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        kaldiLibrary(b, target, lib, kaldi_dep, fst_dep, srcs);
 
         lib.linkLibrary(kaldi_gmm);
         lib.linkLibrary(kaldi_tree);
@@ -296,7 +289,7 @@ pub fn build(b: *std.Build) void {
             "src/ivector/plda.cc",
             "src/ivector/voice-activity-detection.cc",
         };
-        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        kaldiLibrary(b, target, lib, kaldi_dep, fst_dep, srcs);
 
         lib.linkLibrary(kaldi_transform);
         lib.linkLibrary(kaldi_gmm);
@@ -332,7 +325,7 @@ pub fn build(b: *std.Build) void {
             "src/cudamatrix/cu-tp-matrix.cc",
             "src/cudamatrix/cu-vector.cc",
         };
-        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        kaldiLibrary(b, target, lib, kaldi_dep, fst_dep, srcs);
 
         lib.linkLibrary(kaldi_util);
         lib.linkLibrary(kaldi_matrix);
@@ -359,7 +352,7 @@ pub fn build(b: *std.Build) void {
             "src/hmm/transition-model.cc",
             "src/hmm/tree-accu.cc",
         };
-        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        kaldiLibrary(b, target, lib, kaldi_dep, fst_dep, srcs);
 
         lib.linkLibrary(kaldi_tree);
         lib.linkLibrary(kaldi_util);
@@ -391,7 +384,7 @@ pub fn build(b: *std.Build) void {
             "src/lat/word-align-lattice-lexicon.cc",
             "src/lat/word-align-lattice.cc",
         };
-        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        kaldiLibrary(b, target, lib, kaldi_dep, fst_dep, srcs);
 
         lib.linkLibrary(kaldi_hmm);
         lib.linkLibrary(kaldi_tree);
@@ -416,7 +409,7 @@ pub fn build(b: *std.Build) void {
             "src/fstext/kaldi-fst-io.cc",
             "src/fstext/push-special.cc",
         };
-        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        kaldiLibrary(b, target, lib, kaldi_dep, fst_dep, srcs);
     }
 
     //
@@ -438,7 +431,7 @@ pub fn build(b: *std.Build) void {
             "src/chain/chain-training.cc",
             "src/chain/chain-generic-numerator.cc",
         };
-        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        kaldiLibrary(b, target, lib, kaldi_dep, fst_dep, srcs);
         lib.defineCMacro("HAVE_CUDA", "0");
 
         lib.linkLibrary(kaldi_cudamatrix);
@@ -474,7 +467,7 @@ pub fn build(b: *std.Build) void {
             "src/decoder/simple-decoder.cc",
             "src/decoder/training-graph-compiler.cc",
         };
-        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        kaldiLibrary(b, target, lib, kaldi_dep, fst_dep, srcs);
 
         lib.linkLibrary(kaldi_lat);
         lib.linkLibrary(kaldi_fstext);
@@ -545,7 +538,7 @@ pub fn build(b: *std.Build) void {
             "src/nnet3/nnet-training.cc",
             "src/nnet3/nnet-utils.cc",
         };
-        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        kaldiLibrary(b, target, lib, kaldi_dep, fst_dep, srcs);
         lib.defineCMacro("HAVE_CUDA", "0");
 
         lib.linkLibrary(kaldi_chain);
@@ -586,7 +579,7 @@ pub fn build(b: *std.Build) void {
             "src/feat/signal.cc",
             "src/feat/wave-reader.cc",
         };
-        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        kaldiLibrary(b, target, lib, kaldi_dep, fst_dep, srcs);
 
         lib.linkLibrary(kaldi_transform);
         lib.linkLibrary(kaldi_gmm);
@@ -614,7 +607,7 @@ pub fn build(b: *std.Build) void {
             "src/lm/kenlm.cc",
             "src/lm/mikolov-rnnlm-lib.cc",
         };
-        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        kaldiLibrary(b, target, lib, kaldi_dep, fst_dep, srcs);
 
         lib.linkLibrary(kaldi_fstext);
         lib.linkLibrary(kaldi_util);
@@ -646,7 +639,7 @@ pub fn build(b: *std.Build) void {
             "src/rnnlm/sampling-lm-estimate.cc",
             "src/rnnlm/sampling-lm.cc",
         };
-        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        kaldiLibrary(b, target, lib, kaldi_dep, fst_dep, srcs);
         lib.linkLibCpp();
 
         lib.linkLibrary(kaldi_nnet3);
@@ -696,7 +689,7 @@ pub fn build(b: *std.Build) void {
             "src/nnet2/train-nnet.cc",
             "src/nnet2/widen-nnet.cc",
         };
-        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        kaldiLibrary(b, target, lib, kaldi_dep, fst_dep, srcs);
         lib.defineCMacro("HAVE_CUDA", "0");
 
         lib.linkLibrary(kaldi_cudamatrix);
@@ -736,7 +729,7 @@ pub fn build(b: *std.Build) void {
             "src/online2/online-timing.cc",
             "src/online2/onlinebin-util.cc",
         };
-        kaldiLibrary(lib, kaldi_dep, fst_dep, srcs);
+        kaldiLibrary(b, target, lib, kaldi_dep, fst_dep, srcs);
 
         lib.linkLibrary(kaldi_ivector);
         lib.linkLibrary(kaldi_nnet3);
@@ -753,27 +746,6 @@ pub fn build(b: *std.Build) void {
         lib.linkLibrary(kaldi_util);
         lib.linkLibrary(kaldi_matrix);
         lib.linkLibrary(kaldi_base);
-    }
-
-    //
-
-    const kaldi = b.addStaticLibrary(.{
-        .name = "kaldi",
-        .target = target,
-        .optimize = kaldi_optimize,
-        .strip = true,
-        .root_source_file = b.addWriteFiles().add("empty.c", ""),
-    });
-    {
-        const lib = kaldi;
-
-        lib.linkLibCpp();
-
-        // NOTE: vosk only needs -lrnnlm -lonline2
-        lib.linkLibrary(kaldi_rnnlm);
-        lib.linkLibrary(kaldi_online2);
-
-        lib.pie = true;
     }
 
     //----
@@ -814,8 +786,17 @@ pub fn build(b: *std.Build) void {
             lib.addIncludePath(fst_dep.path("src/include"));
 
             lib.linkLibCpp();
-            lib.linkLibrary(kaldi);
+            lib.linkLibrary(kaldi_rnnlm);
+            lib.linkLibrary(kaldi_online2);
             lib.linkLibrary(fstngram);
+
+            if (target.result.os.tag == .macos) {
+                const sdk = std.zig.system.darwin.getSdk(b.allocator, b.host.result) orelse
+                    @panic("macOS SDK is missing");
+                lib.addSystemIncludePath(.{ .path = b.pathJoin(&.{ sdk, "/usr/include" }) });
+                lib.addSystemFrameworkPath(.{ .path = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
+                lib.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
+            }
 
             lib.installHeader(
                 vosk_dep.path("src/vosk_api.h").getPath(b),
@@ -900,6 +881,8 @@ pub fn build(b: *std.Build) void {
 }
 
 fn kaldiLibrary(
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
     lib: *std.Build.Step.Compile,
     kaldi_dep: *std.Build.Dependency,
     fst_dep: *std.Build.Dependency,
@@ -915,6 +898,14 @@ fn kaldiLibrary(
     lib.addIncludePath(kaldi_dep.path("src/base"));
     lib.addIncludePath(fst_dep.path("src/include"));
     lib.linkLibCpp();
+
+    if (target.result.os.tag == .macos) {
+        const sdk = std.zig.system.darwin.getSdk(b.allocator, b.host.result) orelse
+            @panic("macOS SDK is missing");
+        lib.addSystemIncludePath(.{ .path = b.pathJoin(&.{ sdk, "/usr/include" }) });
+        lib.addSystemFrameworkPath(.{ .path = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
+        lib.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
+    }
 
     lib.pie = true;
 }
