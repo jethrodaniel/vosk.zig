@@ -798,10 +798,7 @@ pub fn build(b: *std.Build) void {
                 lib.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
             }
 
-            lib.installHeader(
-                vosk_dep.path("src/vosk_api.h").getPath(b),
-                "vosk_api.h",
-            );
+            lib.installHeader(vosk_dep.path("src/vosk_api.h"), "vosk_api.h");
 
             if (lib.linkage == .static)
                 lib.pie = true
