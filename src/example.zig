@@ -31,7 +31,7 @@ pub fn main() !void {
     try wav_file.seekTo(44); // skip wav header
 
     const wav_data_slice = try wav_file.readToEndAlloc(allocator, std.math.maxInt(u32));
-    errdefer allocator.free(wav_data_slice);
+    defer allocator.free(wav_data_slice);
 
     const model_path_c_str = @as([*c]const u8, @constCast(@ptrCast(model_path)));
     const wav_data_c = @as([*c]u8, @ptrCast(@alignCast(wav_data_slice)));
