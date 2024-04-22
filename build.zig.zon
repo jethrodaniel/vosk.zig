@@ -11,8 +11,8 @@
     },
     .dependencies = .{
         .vosk = .{
-            .url = "git+https://github.com/alphacep/vosk-api#40937b6bcbe318eeb01879093c59cf5a1219a29d",
-            .hash = "1220e70df41f7c45ac2d71fdb526b2d08e6834b6c9476039e0a64038be1642de1ec3",
+            .url = "git+https://github.com/alphacep/vosk-api#v0.3.50",
+            .hash = "1220ac3fd3082c02ab2747df540ca43bc4c9dc762b1bf5bc95a5678052171c7861d1",
         },
         // Fork of alphacep/openfst#master with NDEBUG fixes
         // https://github.com/alphacep/openfst/compare/master...jethrodaniel:openfst:fork

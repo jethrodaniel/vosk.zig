@@ -11,21 +11,21 @@ gh run download -D tmp -n vosk
 tree tmp
 cd tmp
 
-# NOTE: on linux, use --owner=0 --group=0
-tar czvf vosk-0.3.48-x86_64-macos.tar.gz --uid=0 --gid=0 x86_64-macos
-tar czvf vosk-0.3.48-aarch64-macos.tar.gz --uid=0 --gid=0 aarch64-macos
+VERSION='0.3.50'
+TAG='v0.3.0'
 
-TAG='v0.2.0'
+# NOTE: on linux, use --owner=0 --group=0
+tar czvf "vosk-$VERSION-x86_64-macos.tar.gz" --uid=0 --gid=0 x86_64-macos
+tar czvf "vosk-$VERSION-aarch64-macos.tar.gz" --uid=0 --gid=0 aarch64-macos
+
 
 gh release create "$TAG" -n "
 Builds of https://github.com/alphacep/vosk-api.
 
 ### NOTE
 
-v0.3.48 isn't officially released yet.
-
-Vosk version: https://github.com/alphacep/vosk-api/tree/40937b6bcbe318eeb01879093c59cf5a1219a29d
+Vosk release: https://github.com/alphacep/vosk-api/releases/tag/v$VERSION
 "
 
-gh release upload --clobber "$TAG" vosk-0.3.48-x86_64-macos.tar.gz
-gh release upload --clobber "$TAG" vosk-0.3.48-aarch64-macos.tar.gz
+gh release upload --clobber "$TAG" "vosk-$VERSION-x86_64-macos.tar.gz"
+gh release upload --clobber "$TAG" "vosk-$VERSION-aarch64-macos.tar.gz"
