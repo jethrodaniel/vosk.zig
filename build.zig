@@ -793,9 +793,9 @@ pub fn build(b: *std.Build) void {
             if (target.result.os.tag == .macos) {
                 const sdk = std.zig.system.darwin.getSdk(b.allocator, b.host.result) orelse
                     @panic("macOS SDK is missing");
-                lib.addSystemIncludePath(.{ .path = b.pathJoin(&.{ sdk, "/usr/include" }) });
-                lib.addSystemFrameworkPath(.{ .path = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
-                lib.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
+                lib.addSystemIncludePath(.{ .cwd_relative = b.pathJoin(&.{ sdk, "/usr/include" }) });
+                lib.addSystemFrameworkPath(.{ .cwd_relative = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
+                lib.addLibraryPath(.{ .cwd_relative = b.pathJoin(&.{ sdk, "/usr/lib" }) });
             }
 
             lib.installHeader(vosk_dep.path("src/vosk_api.h"), "vosk_api.h");
@@ -808,7 +808,7 @@ pub fn build(b: *std.Build) void {
     }
 
     const module = b.addModule("vosk", .{
-        .root_source_file = .{ .path = "src/lib.zig" },
+        .root_source_file = b.path("src/lib.zig"),
         .link_libcpp = true,
     });
     {
@@ -825,7 +825,7 @@ pub fn build(b: *std.Build) void {
     {
         const exe = example_static;
 
-        exe.addCSourceFile(.{ .file = .{ .path = "src/example.c" }, .flags = &.{} });
+        exe.addCSourceFile(.{ .file = b.path("src/example.c"), .flags = &.{} });
 
         exe.linkLibrary(static_lib);
 
@@ -845,7 +845,7 @@ pub fn build(b: *std.Build) void {
     {
         const exe = example_shared;
 
-        exe.addCSourceFile(.{ .file = .{ .path = "src/example.c" }, .flags = &.{} });
+        exe.addCSourceFile(.{ .file = b.path("src/example.c"), .flags = &.{} });
 
         exe.linkLibrary(shared_lib);
 
@@ -861,7 +861,7 @@ pub fn build(b: *std.Build) void {
         .name = "example-zig",
         .target = target,
         .optimize = optimize,
-        .root_source_file = .{ .path = "src/example.zig" },
+        .root_source_file = b.path("src/example.zig"),
     });
     {
         const exe = example_zig;
@@ -899,9 +899,9 @@ fn kaldiLibrary(
     if (target.result.os.tag == .macos) {
         const sdk = std.zig.system.darwin.getSdk(b.allocator, b.host.result) orelse
             @panic("macOS SDK is missing");
-        lib.addSystemIncludePath(.{ .path = b.pathJoin(&.{ sdk, "/usr/include" }) });
-        lib.addSystemFrameworkPath(.{ .path = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
-        lib.addLibraryPath(.{ .path = b.pathJoin(&.{ sdk, "/usr/lib" }) });
+        lib.addSystemIncludePath(.{ .cwd_relative = b.pathJoin(&.{ sdk, "/usr/include" }) });
+        lib.addSystemFrameworkPath(.{ .cwd_relative = b.pathJoin(&.{ sdk, "/System/Library/Frameworks" }) });
+        lib.addLibraryPath(.{ .cwd_relative = b.pathJoin(&.{ sdk, "/usr/lib" }) });
     }
 
     lib.pie = true;

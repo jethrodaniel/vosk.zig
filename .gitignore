@@ -1,5 +1,5 @@
 # Copyright 2023-present, Mark Delk
 # SPDX-License-Identifier: Apache-2.0
 
-zig-cache
+.zig-cache
 zig-out
